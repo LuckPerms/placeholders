@@ -232,7 +232,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getPermissions().stream()
                     .filter(Node::isTemporary)
-                    .filter(n -> n.toSerializedNode().equals(node))
+                    .filter(n -> n.getPermission().equals(node))
                     .map(Node::getExpiryUnixTime)
                     .findAny()
                     .map(e -> TimeUtil.getTime((int) (e - currentTime)))
