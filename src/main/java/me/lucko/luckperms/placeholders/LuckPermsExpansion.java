@@ -53,7 +53,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
     private static final String IDENTIFIER = "luckperms";
     private static final String PLUGIN_NAME = "LuckPerms";
     private static final String AUTHOR = "Luck";
-    private static final String VERSION = "3.0";
+    private static final String VERSION = "3.0-R3";
 
     private LuckPermsApi api = null;
 
