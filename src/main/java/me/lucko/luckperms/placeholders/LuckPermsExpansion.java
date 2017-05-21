@@ -37,7 +37,6 @@ import me.lucko.luckperms.api.Track;
 import me.lucko.luckperms.api.User;
 import me.lucko.luckperms.api.caching.PermissionData;
 import me.lucko.luckperms.api.caching.UserData;
-import me.lucko.luckperms.api.context.MutableContextSet;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -72,11 +71,12 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
         return super.register();
     }
 
-    private Contexts makeContexts(Player player) {
-        MutableContextSet contextSet = new MutableContextSet();
-        contextSet.add("server", api.getConfiguration().getVaultServer());
-        contextSet.add("world", player.getWorld().getName());// ignore world?
-        return Contexts.of(contextSet.makeImmutable(), api.getConfiguration().getVaultIncludeGlobal(), true, true, true, true, player.isOp());
+    private Contexts makeContexts(User user) {
+        Contexts contexts = api.getContextForUser(user).orElse(null);
+        if (contexts == null) {
+            contexts = Contexts.allowAll();
+        }
+        return contexts;
     }
 
     @Override
@@ -116,17 +116,17 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
 
         if (identifier.startsWith("has_permission_") && identifier.length() > "has_permission_".length()) {
             String node = identifier.substring("has_permission_".length());
-            return formatBoolean(user.hasPermission(node, true));
+            return formatBoolean(user.hasPermission(api.buildNode(node).build()).asBoolean());
         }
 
         if (identifier.startsWith("inherits_permission_") && identifier.length() > "inherits_permission_".length()) {
             String node = identifier.substring("inherits_permission_".length());
-            return formatBoolean(data.getPermissionData(makeContexts(player)).getPermissionValue(node).asBoolean());
+            return formatBoolean(data.getPermissionData(makeContexts(user)).getPermissionValue(node).asBoolean());
         }
 
         if (identifier.startsWith("check_permission_") && identifier.length() > "check_permission_".length()) {
             String node = identifier.substring("check_permission_".length());
-            return formatBoolean(data.getPermissionData(makeContexts(player)).getPermissionValue(node).asBoolean());
+            return formatBoolean(data.getPermissionData(makeContexts(user)).getPermissionValue(node).asBoolean());
         }
 
         if (identifier.startsWith("in_group_") && identifier.length() > "in_group_".length()) {
@@ -136,7 +136,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
 
         if (identifier.startsWith("inherits_group_") && identifier.length() > "inherits_group_".length()) {
             String groupName = identifier.substring("inherits_group_".length());
-            return formatBoolean(data.getPermissionData(makeContexts(player)).getPermissionValue("group." + groupName).asBoolean());
+            return formatBoolean(data.getPermissionData(makeContexts(user)).getPermissionValue("group." + groupName).asBoolean());
         }
 
         if (identifier.startsWith("on_track_") && identifier.length() > "on_track_".length()) {
@@ -192,7 +192,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
 
         if (identifier.startsWith("first_group_on_tracks_") && identifier.length() > "first_group_on_tracks_".length()) {
             List<String> tracks = Splitter.on(',').trimResults().splitToList(identifier.substring("first_group_on_tracks_".length()));
-            PermissionData permData = data.getPermissionData(makeContexts(player));
+            PermissionData permData = data.getPermissionData(makeContexts(user));
             return tracks.stream()
                     .map(t -> api.getTrackSafe(t))
                     .filter(Optional::isPresent)
@@ -210,7 +210,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
 
         if (identifier.startsWith("last_group_on_tracks_") && identifier.length() > "last_group_on_tracks_".length()) {
             List<String> tracks = Splitter.on(',').trimResults().splitToList(identifier.substring("last_group_on_tracks_".length()));
-            PermissionData permData = data.getPermissionData(makeContexts(player));
+            PermissionData permData = data.getPermissionData(makeContexts(user));
             return tracks.stream()
                     .map(t -> api.getTrackSafe(t))
                     .filter(Optional::isPresent)
@@ -253,16 +253,16 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
         }
 
         if (identifier.equalsIgnoreCase("prefix")) {
-            return Optional.ofNullable(data.calculateMeta(makeContexts(player)).getPrefix()).orElse("");
+            return Optional.ofNullable(data.calculateMeta(makeContexts(user)).getPrefix()).orElse("");
         }
 
         if (identifier.equalsIgnoreCase("suffix")) {
-            return Optional.ofNullable(data.calculateMeta(makeContexts(player)).getSuffix()).orElse("");
+            return Optional.ofNullable(data.calculateMeta(makeContexts(user)).getSuffix()).orElse("");
         }
 
         if (identifier.startsWith("meta_") && identifier.length() > "meta_".length()) {
             String node = identifier.substring("meta_".length());
-            return data.getMetaData(makeContexts(player)).getMeta().getOrDefault(node, "");
+            return data.getMetaData(makeContexts(user)).getMeta().getOrDefault(node, "");
         }
 
         return null;
