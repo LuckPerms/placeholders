@@ -1,0 +1,7 @@
+name: LuckPermsMVdWHook
+version: ${project.version}
+description: Provides placeholders for LuckPerms
+author: Luck
+website: https://github.com/lucko/LuckPerms/wiki/Placeholders
+main: me.lucko.luckperms.placeholders.LuckPermsMVdWHook
+depend: [LuckPerms, MVdWPlaceholderAPI]

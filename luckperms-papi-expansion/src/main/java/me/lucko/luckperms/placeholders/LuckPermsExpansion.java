@@ -1,5 +1,8 @@
 /*
- * Copyright (c) 2016 Lucko (Luck) <luck@lucko.me>
+ * This file is part of LuckPerms, licensed under the MIT License.
+ *
+ *  Copyright (c) lucko (Luck) <luck@lucko.me>
+ *  Copyright (c) contributors
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -45,14 +48,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/*
+/**
  * PlaceholderAPI Expansion for LuckPerms, implemented using the LuckPerms API.
  */
 public class LuckPermsExpansion extends PlaceholderExpansion {
     private static final String IDENTIFIER = "luckperms";
     private static final String PLUGIN_NAME = "LuckPerms";
     private static final String AUTHOR = "Luck";
-    private static final String VERSION = "3.0-R3";
+    private static final String VERSION = "3.3-R1";
 
     private LuckPermsApi api = null;
 
@@ -90,11 +93,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
             return "";
         }
 
-        UserData data = user.getUserDataCache().orElse(null);
-        if (data == null) {
-            return "";
-        }
-
+        UserData data = user.getCachedData();
         identifier = identifier.toLowerCase();
 
         if (identifier.equals("group_name")) {
@@ -111,7 +110,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
         }
 
         if (identifier.equals("groups")) {
-            return user.getGroupNames().stream().collect(Collectors.joining(", "));
+            return user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).collect(Collectors.joining(", "));
         }
 
         if (identifier.startsWith("has_permission_") && identifier.length() > "has_permission_".length()) {
@@ -131,7 +130,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
 
         if (identifier.startsWith("in_group_") && identifier.length() > "in_group_".length()) {
             String groupName = identifier.substring("in_group_".length());
-            return formatBoolean(user.getGroupNames().contains(groupName));
+            return formatBoolean(user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).anyMatch(s -> s.equalsIgnoreCase(groupName)));
         }
 
         if (identifier.startsWith("inherits_group_") && identifier.length() > "inherits_group_".length()) {
@@ -149,12 +148,8 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
         if (identifier.startsWith("has_groups_on_track_") && identifier.length() > "has_groups_on_track_".length()) {
             String trackName = identifier.substring("has_groups_on_track_".length());
             return api.getTrackSafe(trackName).map(t -> {
-                for (String group : user.getGroupNames()) {
-                    if (t.containsGroup(group)) {
-                        return formatBoolean(true);
-                    }
-                }
-                return formatBoolean(false);
+                boolean match = user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).anyMatch(t::containsGroup);
+                return formatBoolean(match);
             }).orElse("");
         }
 

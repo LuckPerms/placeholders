@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+    	<groupId>me.lucko</groupId>
+    	<artifactId>luckperms-placeholders-parent</artifactId>
+    	<version>3.3-SNAPSHOT</version>
+    </parent>
+
+	<artifactId>luckperms-mvdw-hook</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <defaultGoal>clean package</defaultGoal>
+        <finalName>LuckPermsMVdWHook</finalName>
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>*.yml</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+    <dependencies>
+		<!-- MVdWPlaceholderAPI -->
+        <dependency>
+  			<groupId>be.maximvdw</groupId>
+  			<artifactId>MVdWPlaceholderAPI</artifactId>
+  			<version>1.0.2-SNAPSHOT</version>
+		</dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>mvdw-software</id>
+            <url>http://repo.mvdw-software.be/content/groups/public/</url>
+        </repository>
+    </repositories>
+
+</project>

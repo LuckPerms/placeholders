@@ -5,12 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.lucko</groupId>
-    <artifactId>luckperms-placeholders</artifactId>
-    <version>3.0</version>
-    <packaging>jar</packaging>
+    <artifactId>luckperms-placeholders-parent</artifactId>
+    <version>3.3-SNAPSHOT</version>
+
+    <modules>
+    	<module>luckperms-papi-expansion</module>
+        <module>luckperms-mvdw-hook</module>
+    </modules>
 
     <name>LuckPermsPlaceholders</name>
-    <description>PlaceholderAPI expansion for LuckPerms</description>
+    <description>Placeholders for LuckPerms</description>
     <url>https://github.com/lucko/LuckPermsPlaceholders</url>
 
     <licenses>
@@ -26,39 +30,20 @@
         <url>https://github.com/lucko/LuckPermsPlaceholders</url>
     </scm>
 
+    <packaging>pom</packaging>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
-
-    <build>
-        <defaultGoal>clean package</defaultGoal>
-        <finalName>Expansion-LuckPerms</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencies>
         <!-- LuckPerms API -->
         <dependency>
             <groupId>me.lucko.luckperms</groupId>
             <artifactId>luckperms-api</artifactId>
-            <version>3.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- PlaceholderAPI -->
-        <dependency>
-            <groupId>me.clip</groupId>
-            <artifactId>placeholderapi</artifactId>
-            <version>2.6.0</version>
+            <version>3.3</version>
             <scope>provided</scope>
         </dependency>
         <!-- BukkitAPI -->
@@ -74,10 +59,6 @@
         <repository>
             <id>luck-repo</id>
             <url>https://repo.lucko.me/</url>
-        </repository>
-        <repository>
-            <id>placeholderapi-repo</id>
-            <url>http://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
         <repository>
             <id>spigot-repo</id>
