@@ -67,11 +67,7 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
     }
 
     private Contexts makeContexts(User user) {
-        Contexts contexts = api.getContextForUser(user).orElse(null);
-        if (contexts == null) {
-            contexts = Contexts.allowAll();
-        }
-        return contexts;
+        return api.getContextForUser(user).orElseGet(() -> api.getContextManager().getStaticContexts());
     }
 
     @Override
