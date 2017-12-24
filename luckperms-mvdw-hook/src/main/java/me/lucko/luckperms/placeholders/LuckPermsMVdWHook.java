@@ -46,7 +46,9 @@ import be.maximvdw.placeholderapi.PlaceholderReplaceEvent;
 import be.maximvdw.placeholderapi.PlaceholderReplacer;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -66,8 +68,12 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
         PlaceholderAPI.registerPlaceholder(this, "luckperms_*", this);
     }
 
-    private Contexts makeContexts(User user) {
-        return api.getContextForUser(user).orElseGet(() -> api.getContextManager().getStaticContexts());
+    private String formatGroupName(String groupName) {
+        Group group = api.getGroup(groupName);
+        if (group != null) {
+            groupName = group.getFriendlyName();
+        }
+        return groupName;
     }
 
     @Override
@@ -93,35 +99,40 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
         identifier = identifier.toLowerCase();
 
         if (identifier.equals("group_name")) {
-            return user.getPrimaryGroup();
+            return formatGroupName(user.getPrimaryGroup());
         }
 
         if (identifier.startsWith("context_") && identifier.length() > "context_".length()) {
             String key = identifier.substring("context_".length());
-            return api.getContextForUser(user)
-                    .map(Contexts::getContexts)
-                    .map(c -> c.getValues(key))
-                    .map(s -> Iterables.getFirst(s, ""))
-                    .orElse("");
+            Set<String> values = api.getContextManager().getApplicableContext(player).getValues(key);
+            if (values.isEmpty()) {
+                return "";
+            } else {
+                return values.stream().collect(Collectors.joining(", "));
+            }
         }
 
         if (identifier.equals("groups")) {
-            return user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).collect(Collectors.joining(", "));
+            return user.getOwnNodes().stream()
+                    .filter(Node::isGroupNode)
+                    .map(Node::getGroupName)
+                    .map(this::formatGroupName)
+                    .collect(Collectors.joining(", "));
         }
 
         if (identifier.startsWith("has_permission_") && identifier.length() > "has_permission_".length()) {
             String node = identifier.substring("has_permission_".length());
-            return formatBoolean(user.hasPermission(api.buildNode(node).build()).asBoolean());
+            return formatBoolean(user.getOwnNodes().stream().anyMatch(n -> n.getPermission().equals(node)));
         }
 
         if (identifier.startsWith("inherits_permission_") && identifier.length() > "inherits_permission_".length()) {
             String node = identifier.substring("inherits_permission_".length());
-            return formatBoolean(data.getPermissionData(makeContexts(user)).getPermissionValue(node).asBoolean());
+            return formatBoolean(user.getPermissions().stream().anyMatch(n -> n.getPermission().equals(node)));
         }
 
         if (identifier.startsWith("check_permission_") && identifier.length() > "check_permission_".length()) {
             String node = identifier.substring("check_permission_".length());
-            return formatBoolean(data.getPermissionData(makeContexts(user)).getPermissionValue(node).asBoolean());
+            return formatBoolean(player.hasPermission(node));
         }
 
         if (identifier.startsWith("in_group_") && identifier.length() > "in_group_".length()) {
@@ -131,37 +142,36 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
 
         if (identifier.startsWith("inherits_group_") && identifier.length() > "inherits_group_".length()) {
             String groupName = identifier.substring("inherits_group_".length());
-            return formatBoolean(data.getPermissionData(makeContexts(user)).getPermissionValue("group." + groupName).asBoolean());
+            return formatBoolean(player.hasPermission("group." + groupName));
         }
 
         if (identifier.startsWith("on_track_") && identifier.length() > "on_track_".length()) {
             String trackName = identifier.substring("on_track_".length());
-            return api.getTrackSafe(trackName)
-                    .map(t -> formatBoolean(t.containsGroup(user.getPrimaryGroup())))
-                    .orElse("");
+            return formatBoolean(api.getTrackSafe(trackName)
+                    .map(t -> t.containsGroup(user.getPrimaryGroup()))
+                    .orElse(false));
         }
 
         if (identifier.startsWith("has_groups_on_track_") && identifier.length() > "has_groups_on_track_".length()) {
             String trackName = identifier.substring("has_groups_on_track_".length());
-            return api.getTrackSafe(trackName).map(t -> {
-                boolean match = user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).anyMatch(t::containsGroup);
-                return formatBoolean(match);
-            }).orElse("");
+            return formatBoolean(api.getTrackSafe(trackName)
+                    .map(t -> user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).anyMatch(t::containsGroup))
+                    .orElse(false));
         }
 
         if (identifier.equals("highest_group_by_weight")) {
             return user.getPermissions().stream()
                     .filter(Node::isGroupNode)
                     .map(Node::getGroupName)
-                    .map(s -> api.getGroupSafe(s))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+                    .map(s -> api.getGroup(s))
+                    .filter(Objects::nonNull)
                     .sorted((o1, o2) -> {
                         int ret = Integer.compare(o1.getWeight().orElse(0), o2.getWeight().orElse(0));
                         return ret == 1 ? 1 : -1;
                     })
                     .findFirst()
                     .map(Group::getName)
+                    .map(this::formatGroupName)
                     .orElse("");
         }
 
@@ -169,25 +179,24 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
             return user.getPermissions().stream()
                     .filter(Node::isGroupNode)
                     .map(Node::getGroupName)
-                    .map(s -> api.getGroupSafe(s))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+                    .map(s -> api.getGroup(s))
+                    .filter(Objects::nonNull)
                     .sorted((o1, o2) -> {
                         int ret = Integer.compare(o1.getWeight().orElse(0), o2.getWeight().orElse(0));
                         return ret == 1 ? -1 : 1;
                     })
                     .findFirst()
                     .map(Group::getName)
+                    .map(this::formatGroupName)
                     .orElse("");
         }
 
         if (identifier.startsWith("first_group_on_tracks_") && identifier.length() > "first_group_on_tracks_".length()) {
             List<String> tracks = Splitter.on(',').trimResults().splitToList(identifier.substring("first_group_on_tracks_".length()));
-            PermissionData permData = data.getPermissionData(makeContexts(user));
+            PermissionData permData = data.getPermissionData(api.getContextsForPlayer(player));
             return tracks.stream()
-                    .map(t -> api.getTrackSafe(t))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+                    .map(t -> api.getTrack(t))
+                    .filter(Objects::nonNull)
                     .map(Track::getGroups)
                     .map(groups -> groups.stream()
                             .filter(s -> permData.getPermissionValue("group." + s).asBoolean())
@@ -195,17 +204,17 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
                     )
                     .filter(Optional::isPresent)
                     .map(Optional::get)
+                    .map(this::formatGroupName)
                     .findFirst()
                     .orElse("");
         }
 
         if (identifier.startsWith("last_group_on_tracks_") && identifier.length() > "last_group_on_tracks_".length()) {
             List<String> tracks = Splitter.on(',').trimResults().splitToList(identifier.substring("last_group_on_tracks_".length()));
-            PermissionData permData = data.getPermissionData(makeContexts(user));
+            PermissionData permData = data.getPermissionData(api.getContextsForPlayer(player));
             return tracks.stream()
-                    .map(t -> api.getTrackSafe(t))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+                    .map(t -> api.getTrack(t))
+                    .filter(Objects::nonNull)
                     .map(Track::getGroups)
                     .map(Lists::reverse)
                     .map(groups -> groups.stream()
@@ -214,6 +223,7 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
                     )
                     .filter(Optional::isPresent)
                     .map(Optional::get)
+                    .map(this::formatGroupName)
                     .findFirst()
                     .orElse("");
         }
@@ -236,7 +246,7 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
             return user.getPermissions().stream()
                     .filter(Node::isTemporary)
                     .filter(Node::isGroupNode)
-                    .filter(n -> n.getGroupName().equals(group))
+                    .filter(n -> n.getGroupName().equalsIgnoreCase(group))
                     .map(Node::getExpiryUnixTime)
                     .findAny()
                     .map(e -> getTime((int) (e - currentTime)))
@@ -244,16 +254,16 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
         }
 
         if (identifier.equalsIgnoreCase("prefix")) {
-            return Optional.ofNullable(data.calculateMeta(makeContexts(user)).getPrefix()).orElse("");
+            return Optional.ofNullable(data.calculateMeta(api.getContextsForPlayer(player)).getPrefix()).orElse("");
         }
 
         if (identifier.equalsIgnoreCase("suffix")) {
-            return Optional.ofNullable(data.calculateMeta(makeContexts(user)).getSuffix()).orElse("");
+            return Optional.ofNullable(data.calculateMeta(api.getContextsForPlayer(player)).getSuffix()).orElse("");
         }
 
         if (identifier.startsWith("meta_") && identifier.length() > "meta_".length()) {
             String node = identifier.substring("meta_".length());
-            return data.getMetaData(makeContexts(user)).getMeta().getOrDefault(node, "");
+            return data.getMetaData(api.getContextsForPlayer(player)).getMeta().getOrDefault(node, "");
         }
 
         return null;
