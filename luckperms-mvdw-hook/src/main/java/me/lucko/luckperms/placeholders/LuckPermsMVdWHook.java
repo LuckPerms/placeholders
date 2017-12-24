@@ -26,10 +26,8 @@
 package me.lucko.luckperms.placeholders;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import me.lucko.luckperms.api.Contexts;
 import me.lucko.luckperms.api.Group;
 import me.lucko.luckperms.api.LuckPermsApi;
 import me.lucko.luckperms.api.Node;
