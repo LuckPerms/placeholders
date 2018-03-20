@@ -82,7 +82,6 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
     }
 
     private void setup(PlaceholderBuilder builder) {
-        builder.addStatic("group_name", (player, user, userData) -> convertGroupDisplayName(user.getPrimaryGroup()));
         builder.addDynamic("context", (player, user, userData, key) ->
                 this.api.getContextManager().getApplicableContext(player).getValues(key).stream()
                         .collect(Collectors.joining(", "))
@@ -95,6 +94,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .collect(Collectors.joining(", "))
         );
+        builder.addStatic("primary_group_name", (player, user, userData) -> convertGroupDisplayName(user.getPrimaryGroup()));
         builder.addDynamic("has_permission", (player, user, userData, node) ->
                 user.getOwnNodes().stream()
                         .anyMatch(n -> n.getPermission().equals(node))
@@ -196,7 +196,17 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .filter(Node::isTemporary)
                     .filter(n -> n.getPermission().equals(node))
                     .map(Node::getExpiryUnixTime)
-                    .findAny()
+                    .findFirst()
+                    .map(e -> formatTime((int) (e - currentTime)))
+                    .orElse("");
+        });
+        builder.addDynamic("inherited_expiry_time", (player, user, userData, node) -> {
+            long currentTime = System.currentTimeMillis() / 1000L;
+            return user.getAllNodes().stream()
+                    .filter(Node::isTemporary)
+                    .filter(n -> n.getPermission().equals(node))
+                    .map(Node::getExpiryUnixTime)
+                    .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
         });
@@ -207,7 +217,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .filter(Node::isGroupNode)
                     .filter(n -> n.getGroupName().equalsIgnoreCase(group))
                     .map(Node::getExpiryUnixTime)
-                    .findAny()
+                    .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
         });
@@ -224,7 +234,6 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
             MetaContexts contexts = MetaContexts.of(this.api.getContextsForPlayer(player), stackDefinition, stackDefinition);
             return Strings.nullToEmpty(userData.getMetaData(contexts).getPrefix());
         });
-
         builder.addDynamic("suffix_element", (player, user, userData, element) -> {
             MetaStackElement stackElement = this.api.getMetaStackFactory().fromString(element).orElse(null);
             if (stackElement == null) {
