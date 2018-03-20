@@ -26,6 +26,7 @@
 package me.lucko.luckperms.placeholders;
 
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import me.lucko.luckperms.api.Group;
@@ -64,7 +65,7 @@ public abstract class LPPlaceholderProvider {
     }
 
     public String handle(Player player, String identifier) {
-        User user = this.api.getUserSafe(this.api.getUuidCache().getUUID(player.getUniqueId())).orElse(null);
+        User user = this.api.getUserManager().getUser(player.getUniqueId());
         if (user == null) {
             return "";
         }
@@ -101,7 +102,7 @@ public abstract class LPPlaceholderProvider {
 
         if (identifier.startsWith("inherits_permission_") && identifier.length() > "inherits_permission_".length()) {
             String node = identifier.substring("inherits_permission_".length());
-            return formatBoolean(user.getPermissions().stream().anyMatch(n -> n.getPermission().equals(node)));
+            return formatBoolean(user.getAllNodes().stream().anyMatch(n -> n.getPermission().equals(node)));
         }
 
         if (identifier.startsWith("check_permission_") && identifier.length() > "check_permission_".length()) {
@@ -178,8 +179,8 @@ public abstract class LPPlaceholderProvider {
                     )
                     .filter(Optional::isPresent)
                     .map(Optional::get)
-                    .map(this::formatGroupName)
                     .findFirst()
+                    .map(this::formatGroupName)
                     .orElse("");
         }
 
@@ -197,8 +198,8 @@ public abstract class LPPlaceholderProvider {
                     )
                     .filter(Optional::isPresent)
                     .map(Optional::get)
-                    .map(this::formatGroupName)
                     .findFirst()
+                    .map(this::formatGroupName)
                     .orElse("");
         }
 
@@ -228,11 +229,11 @@ public abstract class LPPlaceholderProvider {
         }
 
         if (identifier.equals("prefix")) {
-            return Optional.ofNullable(data.calculateMeta(this.api.getContextsForPlayer(player)).getPrefix()).orElse("");
+            return Strings.nullToEmpty(data.calculateMeta(this.api.getContextsForPlayer(player)).getPrefix());
         }
 
         if (identifier.equals("suffix")) {
-            return Optional.ofNullable(data.calculateMeta(this.api.getContextsForPlayer(player)).getSuffix()).orElse("");
+            return Strings.nullToEmpty(data.calculateMeta(this.api.getContextsForPlayer(player)).getSuffix());
         }
 
         if (identifier.startsWith("meta_") && identifier.length() > "meta_".length()) {

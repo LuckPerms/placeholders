@@ -40,7 +40,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
     private static final String IDENTIFIER = "luckperms";
     private static final String PLUGIN_NAME = "LuckPerms";
     private static final String AUTHOR = "Luck";
-    private static final String VERSION = "4.0";
+    private static final String VERSION = "4.1";
 
     private LPPlaceholderProvider provider;
 
