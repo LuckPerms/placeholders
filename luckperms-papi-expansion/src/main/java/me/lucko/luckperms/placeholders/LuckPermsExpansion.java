@@ -36,7 +36,7 @@ import org.bukkit.entity.Player;
 /**
  * PlaceholderAPI Expansion for LuckPerms, implemented using the LuckPerms API.
  */
-public class LuckPermsExpansion extends PlaceholderExpansion {
+public class LuckPermsExpansion extends PlaceholderExpansion implements PlaceholderPlatform {
     private static final String IDENTIFIER = "luckperms";
     private static final String PLUGIN_NAME = "LuckPerms";
     private static final String AUTHOR = "Luck";
@@ -56,17 +56,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
         }
 
         LuckPermsApi api = Bukkit.getServicesManager().getRegistration(LuckPermsApi.class).getProvider();
-        this.provider = new LPPlaceholderProvider(api) {
-            @Override
-            protected String formatTime(int time) {
-                return TimeUtil.getTime(time);
-            }
-
-            @Override
-            protected String formatBoolean(boolean b) {
-                return b ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
-            }
-        };
+        this.provider = new LPPlaceholderProvider(this, api);
         return super.register();
     }
 
@@ -76,7 +66,17 @@ public class LuckPermsExpansion extends PlaceholderExpansion {
             return "";
         }
 
-        return this.provider.handle(player, identifier);
+        return this.provider.onPlaceholderRequest(player, identifier);
+    }
+
+    @Override
+    public String formatTime(int time) {
+        return TimeUtil.getTime(time);
+    }
+
+    @Override
+    public String formatBoolean(boolean b) {
+        return b ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
     }
 
     @Override

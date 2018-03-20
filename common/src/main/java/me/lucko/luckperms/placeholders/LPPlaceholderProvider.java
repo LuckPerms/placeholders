@@ -27,6 +27,7 @@ package me.lucko.luckperms.placeholders;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 import me.lucko.luckperms.api.Group;
@@ -39,136 +40,120 @@ import me.lucko.luckperms.api.caching.UserData;
 
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-public abstract class LPPlaceholderProvider {
+/**
+ * Provides LuckPerms placeholders using the {@link LuckPermsApi}.
+ */
+public class LPPlaceholderProvider implements PlaceholderProvider {
+
+    /**
+     * The platform this provider is "providing" placeholders for.
+     */
+    private final PlaceholderPlatform platform;
+
+    /**
+     * The LuckPerms API instance
+     */
     private final LuckPermsApi api;
 
-    public LPPlaceholderProvider(LuckPermsApi api) {
+    /**
+     * The internal placeholders being "provided"
+     */
+    private final Map<String, Placeholder> placeholders;
+
+    public LPPlaceholderProvider(PlaceholderPlatform platform, LuckPermsApi api) {
+        this.platform = platform;
         this.api = api;
+        
+        // register placeholders
+        PlaceholderBuilder builder = new PlaceholderBuilder();
+        setup(builder);
+        this.placeholders = builder.build();
     }
 
-    protected abstract String formatTime(int time);
-
-    protected abstract String formatBoolean(boolean b);
-
-    private String formatGroupName(String groupName) {
-        Group group = this.api.getGroup(groupName);
-        if (group != null) {
-            groupName = group.getFriendlyName();
-        }
-        return groupName;
-    }
-
-    public String handle(Player player, String identifier) {
-        User user = this.api.getUserManager().getUser(player.getUniqueId());
-        if (user == null) {
-            return "";
-        }
-
-        UserData data = user.getCachedData();
-        identifier = identifier.toLowerCase();
-
-        if (identifier.equals("group_name")) {
-            return formatGroupName(user.getPrimaryGroup());
-        }
-
-        if (identifier.startsWith("context_") && identifier.length() > "context_".length()) {
-            String key = identifier.substring("context_".length());
-            Set<String> values = this.api.getContextManager().getApplicableContext(player).getValues(key);
-            if (values.isEmpty()) {
-                return "";
-            } else {
-                return values.stream().collect(Collectors.joining(", "));
-            }
-        }
-
-        if (identifier.equals("groups")) {
-            return user.getOwnNodes().stream()
-                    .filter(Node::isGroupNode)
-                    .map(Node::getGroupName)
-                    .map(this::formatGroupName)
-                    .collect(Collectors.joining(", "));
-        }
-
-        if (identifier.startsWith("has_permission_") && identifier.length() > "has_permission_".length()) {
-            String node = identifier.substring("has_permission_".length());
-            return formatBoolean(user.getOwnNodes().stream().anyMatch(n -> n.getPermission().equals(node)));
-        }
-
-        if (identifier.startsWith("inherits_permission_") && identifier.length() > "inherits_permission_".length()) {
-            String node = identifier.substring("inherits_permission_".length());
-            return formatBoolean(user.getAllNodes().stream().anyMatch(n -> n.getPermission().equals(node)));
-        }
-
-        if (identifier.startsWith("check_permission_") && identifier.length() > "check_permission_".length()) {
-            String node = identifier.substring("check_permission_".length());
-            return formatBoolean(player.hasPermission(node));
-        }
-
-        if (identifier.startsWith("in_group_") && identifier.length() > "in_group_".length()) {
-            String groupName = identifier.substring("in_group_".length());
-            return formatBoolean(user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).anyMatch(s -> s.equalsIgnoreCase(groupName)));
-        }
-
-        if (identifier.startsWith("inherits_group_") && identifier.length() > "inherits_group_".length()) {
-            String groupName = identifier.substring("inherits_group_".length());
-            return formatBoolean(player.hasPermission("group." + groupName));
-        }
-
-        if (identifier.startsWith("on_track_") && identifier.length() > "on_track_".length()) {
-            String trackName = identifier.substring("on_track_".length());
-            return formatBoolean(this.api.getTrackSafe(trackName)
-                    .map(t -> t.containsGroup(user.getPrimaryGroup()))
-                    .orElse(false));
-        }
-
-        if (identifier.startsWith("has_groups_on_track_") && identifier.length() > "has_groups_on_track_".length()) {
-            String trackName = identifier.substring("has_groups_on_track_".length());
-            return formatBoolean(this.api.getTrackSafe(trackName)
-                    .map(t -> user.getOwnNodes().stream().filter(Node::isGroupNode).map(Node::getGroupName).anyMatch(t::containsGroup))
-                    .orElse(false));
-        }
-
-        if (identifier.equals("highest_group_by_weight")) {
-            return user.getPermissions().stream()
-                    .filter(Node::isGroupNode)
-                    .map(Node::getGroupName)
-                    .map(this.api::getGroup)
-                    .filter(Objects::nonNull)
-                    .sorted((o1, o2) -> {
-                        int ret = Integer.compare(o1.getWeight().orElse(0), o2.getWeight().orElse(0));
-                        return ret == 1 ? 1 : -1;
-                    })
-                    .findFirst()
-                    .map(Group::getName)
-                    .map(this::formatGroupName)
-                    .orElse("");
-        }
-
-        if (identifier.equals("lowest_group_by_weight")) {
-            return user.getPermissions().stream()
-                    .filter(Node::isGroupNode)
-                    .map(Node::getGroupName)
-                    .map(this.api::getGroup)
-                    .filter(Objects::nonNull)
-                    .sorted((o1, o2) -> {
-                        int ret = Integer.compare(o1.getWeight().orElse(0), o2.getWeight().orElse(0));
-                        return ret == 1 ? -1 : 1;
-                    })
-                    .findFirst()
-                    .map(Group::getName)
-                    .map(this::formatGroupName)
-                    .orElse("");
-        }
-
-        if (identifier.startsWith("first_group_on_tracks_") && identifier.length() > "first_group_on_tracks_".length()) {
-            List<String> tracks = Splitter.on(',').trimResults().splitToList(identifier.substring("first_group_on_tracks_".length()));
-            PermissionData permData = data.getPermissionData(this.api.getContextsForPlayer(player));
+    private void setup(PlaceholderBuilder builder) {
+        builder.addStatic("group_name", (player, user, userData) -> convertGroupDisplayName(user.getPrimaryGroup()));
+        builder.addDynamic("context", (player, user, userData, key) ->
+                this.api.getContextManager().getApplicableContext(player).getValues(key).stream()
+                        .collect(Collectors.joining(", "))
+        );
+        builder.addStatic("groups", (player, user, userData) ->
+                user.getOwnNodes()
+                        .stream()
+                        .filter(Node::isGroupNode)
+                        .map(Node::getGroupName)
+                        .map(this::convertGroupDisplayName)
+                        .collect(Collectors.joining(", "))
+        );
+        builder.addDynamic("has_permission", (player, user, userData, node) ->
+                user.getOwnNodes().stream()
+                        .anyMatch(n -> n.getPermission().equals(node))
+        );
+        builder.addDynamic("inherits_permission", (player, user, userData, node) ->
+                user.getAllNodes().stream()
+                        .anyMatch(n -> n.getPermission().equals(node))
+        );
+        builder.addDynamic("check_permission", (player, user, userData, node) -> player.hasPermission(node));
+        builder.addDynamic("in_group", (player, user, userData, groupName) ->
+                user.getOwnNodes().stream()
+                        .filter(Node::isGroupNode)
+                        .map(Node::getGroupName)
+                        .anyMatch(s -> s.equalsIgnoreCase(groupName))
+        );
+        builder.addDynamic("inherits_group", (player, user, userData, groupName) -> player.hasPermission("group." + groupName));
+        builder.addDynamic("on_track", (player, user, userData, trackName) ->
+                this.api.getTrackSafe(trackName)
+                        .map(t -> t.containsGroup(user.getPrimaryGroup()))
+                        .orElse(false)
+        );
+        builder.addDynamic("has_groups_on_track", (player, user, userData, trackName) ->
+                this.api.getTrackSafe(trackName)
+                        .map(t -> user.getOwnNodes().stream()
+                                .filter(Node::isGroupNode)
+                                .map(Node::getGroupName)
+                                .anyMatch(t::containsGroup)
+                        )
+                .orElse(false)
+        );
+        builder.addStatic("highest_group_by_weight", (player, user, userData) ->
+                user.getPermissions().stream()
+                        .filter(Node::isGroupNode)
+                        .map(Node::getGroupName)
+                        .map(this.api::getGroup)
+                        .filter(Objects::nonNull)
+                        .sorted((o1, o2) -> {
+                            int ret = Integer.compare(o1.getWeight().orElse(0), o2.getWeight().orElse(0));
+                            return ret == 1 ? 1 : -1;
+                        })
+                        .findFirst()
+                        .map(Group::getName)
+                        .map(this::convertGroupDisplayName)
+                        .orElse("")
+        );
+        builder.addStatic("lowest_group_by_weight", (player, user, userData) ->
+                user.getPermissions().stream()
+                        .filter(Node::isGroupNode)
+                        .map(Node::getGroupName)
+                        .map(this.api::getGroup)
+                        .filter(Objects::nonNull)
+                        .sorted((o1, o2) -> {
+                            int ret = Integer.compare(o1.getWeight().orElse(0), o2.getWeight().orElse(0));
+                            return ret == 1 ? -1 : 1;
+                        })
+                        .findFirst()
+                        .map(Group::getName)
+                        .map(this::convertGroupDisplayName)
+                        .orElse("")
+        );
+        builder.addDynamic("first_group_on_tracks", (player, user, userData, argument) -> {
+            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
+            PermissionData permData = userData.getPermissionData(this.api.getContextsForPlayer(player));
             return tracks.stream()
                     .map(this.api::getTrack)
                     .filter(Objects::nonNull)
@@ -180,13 +165,12 @@ public abstract class LPPlaceholderProvider {
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .findFirst()
-                    .map(this::formatGroupName)
+                    .map(this::convertGroupDisplayName)
                     .orElse("");
-        }
-
-        if (identifier.startsWith("last_group_on_tracks_") && identifier.length() > "last_group_on_tracks_".length()) {
-            List<String> tracks = Splitter.on(',').trimResults().splitToList(identifier.substring("last_group_on_tracks_".length()));
-            PermissionData permData = data.getPermissionData(this.api.getContextsForPlayer(player));
+        });
+        builder.addDynamic("last_group_on_tracks", (player, user, userData, argument) -> {
+            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
+            PermissionData permData = userData.getPermissionData(this.api.getContextsForPlayer(player));
             return tracks.stream()
                     .map(this.api::getTrack)
                     .filter(Objects::nonNull)
@@ -199,12 +183,10 @@ public abstract class LPPlaceholderProvider {
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .findFirst()
-                    .map(this::formatGroupName)
+                    .map(this::convertGroupDisplayName)
                     .orElse("");
-        }
-
-        if (identifier.startsWith("expiry_time_") && identifier.length() > "expiry_time_".length()) {
-            String node = identifier.substring("expiry_time_".length());
+        });
+        builder.addDynamic("expiry_time", (player, user, userData, node) -> {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getPermissions().stream()
                     .filter(Node::isTemporary)
@@ -213,10 +195,8 @@ public abstract class LPPlaceholderProvider {
                     .findAny()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
-        }
-
-        if (identifier.startsWith("group_expiry_time_") && identifier.length() > "group_expiry_time_".length()) {
-            String group = identifier.substring("group_expiry_time_".length());
+        });
+        builder.addDynamic("group_expiry_time", (player, user, userData, group) -> {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getPermissions().stream()
                     .filter(Node::isTemporary)
@@ -226,22 +206,135 @@ public abstract class LPPlaceholderProvider {
                     .findAny()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
+        });
+        builder.addStatic("prefix", (player, user, userData) -> Strings.nullToEmpty(userData.calculateMeta(this.api.getContextsForPlayer(player)).getPrefix()));
+        builder.addStatic("suffix", (player, user, userData) -> Strings.nullToEmpty(userData.calculateMeta(this.api.getContextsForPlayer(player)).getSuffix()));
+        builder.addDynamic("meta", (player, user, userData, node) -> userData.getMetaData(this.api.getContextsForPlayer(player)).getMeta().getOrDefault(node, ""));
+    }
+
+    @Override
+    public String onPlaceholderRequest(Player player, String placeholder) {
+        User user = this.api.getUserManager().getUser(player.getUniqueId());
+        if (user == null) {
+            return "";
         }
 
-        if (identifier.equals("prefix")) {
-            return Strings.nullToEmpty(data.calculateMeta(this.api.getContextsForPlayer(player)).getPrefix());
-        }
+        UserData data = user.getCachedData();
+        placeholder = placeholder.toLowerCase();
 
-        if (identifier.equals("suffix")) {
-            return Strings.nullToEmpty(data.calculateMeta(this.api.getContextsForPlayer(player)).getSuffix());
-        }
+        for (Map.Entry<String, Placeholder> entry : this.placeholders.entrySet()) {
+            String id = entry.getKey();
 
-        if (identifier.startsWith("meta_") && identifier.length() > "meta_".length()) {
-            String node = identifier.substring("meta_".length());
-            return data.getMetaData(this.api.getContextsForPlayer(player)).getMeta().getOrDefault(node, "");
+            Placeholder p = entry.getValue();
+            boolean handled = false;
+            Object result = null;
+
+            if (p instanceof DynamicPlaceholder) {
+                DynamicPlaceholder dp = (DynamicPlaceholder) p;
+
+                if (placeholder.startsWith(id) && placeholder.length() > id.length()) {
+                    String argument = placeholder.substring(id.length());
+                    result = dp.handle(player, user, data, argument);
+                    handled = true;
+                }
+
+            } else if (p instanceof StaticPlaceholder) {
+                StaticPlaceholder sp = (StaticPlaceholder) p;
+
+                if (placeholder.equals(id)) {
+                    result = sp.handle(player, user, data);
+                    handled = true;
+                }
+            }
+
+            if (!handled) {
+                continue;
+            }
+
+            if (result instanceof Boolean) {
+                result = formatBoolean((boolean) result);
+            }
+
+            return result == null ? null : result.toString();
         }
 
         return null;
+    }
+
+    /**
+     * Format a unix timestamp according to the placeholder platforms rules.
+     *
+     * @param time the time
+     * @return a formatted version of the time
+     */
+    private String formatTime(int time) {
+        return this.platform.formatTime(time);
+    }
+
+    /**
+     * Format a boolean according to the placeholder platforms rules.
+     *
+     * @param value the boolean value
+     * @return a formatted representation of the boolean
+     */
+    private String formatBoolean(boolean value) {
+        return this.platform.formatBoolean(value);
+    }
+
+    /**
+     * Returns the display name alias of the group, if it has one.
+     *
+     * @param groupName the group's "id"
+     * @return a "display name" for the given group
+     */
+    private String convertGroupDisplayName(String groupName) {
+        Group group = this.api.getGroup(groupName);
+        if (group != null) {
+            groupName = group.getFriendlyName();
+        }
+        return groupName;
+    }
+
+    /**
+     * Builds a placeholder map
+     */
+    private static final class PlaceholderBuilder {
+        private final Map<String, Placeholder> placeholders = new HashMap<>();
+
+        public void addDynamic(String id, DynamicPlaceholder placeholder) {
+            this.placeholders.put(id + "_", placeholder);
+        }
+
+        public void addStatic(String id, StaticPlaceholder placeholder) {
+            this.placeholders.put(id, placeholder);
+        }
+        
+        public Map<String, Placeholder> build() {
+            return ImmutableMap.copyOf(this.placeholders);
+        }
+    }
+
+    /**
+     * Generic placeholder super interface
+     */
+    private interface Placeholder {
+
+    }
+
+    /**
+     * A placeholder which accepts an extra "argument" at the end of the placeholder
+     */
+    @FunctionalInterface
+    private interface DynamicPlaceholder extends Placeholder {
+        Object handle(Player player, User user, UserData userData, String argument);
+    }
+
+    /**
+     * A standard placeholder which don't accept any arguments
+     */
+    @FunctionalInterface
+    private interface StaticPlaceholder extends Placeholder {
+        Object handle(Player player, User user, UserData userData);
     }
 
 }

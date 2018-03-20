@@ -37,7 +37,7 @@ import be.maximvdw.placeholderapi.PlaceholderReplacer;
 /**
  * MVdWPlaceholderAPI Hook for LuckPerms, implemented using the LuckPerms API.
  */
-public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer {
+public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer, PlaceholderPlatform {
     private LPPlaceholderProvider provider;
 
     @Override
@@ -47,42 +47,7 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
         }
 
         LuckPermsApi api = getServer().getServicesManager().load(LuckPermsApi.class);
-        this.provider = new LPPlaceholderProvider(api) {
-            @Override
-            protected String formatTime(int seconds) {
-                if (seconds == 0) {
-                    return "0s";
-                }
-
-                long minute = seconds / 60;
-                seconds = seconds % 60;
-                long hour = minute / 60;
-                minute = minute % 60;
-                long day = hour / 24;
-                hour = hour % 24;
-
-                StringBuilder time = new StringBuilder();
-                if (day != 0) {
-                    time.append(day).append("d ");
-                }
-                if (hour != 0) {
-                    time.append(hour).append("h ");
-                }
-                if (minute != 0) {
-                    time.append(minute).append("m ");
-                }
-                if (seconds != 0) {
-                    time.append(seconds).append("s");
-                }
-
-                return time.toString().trim();
-            }
-
-            @Override
-            protected String formatBoolean(boolean b) {
-                return b ? "yes" : "no";
-            }
-        };
+        this.provider = new LPPlaceholderProvider(this, api);
         PlaceholderAPI.registerPlaceholder(this, "luckperms_*", this);
     }
 
@@ -100,7 +65,42 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
             return "";
         }
 
-        return this.provider.handle(player, identifier);
+        return this.provider.onPlaceholderRequest(player, identifier);
+    }
+
+    @Override
+    public String formatTime(int seconds) {
+        if (seconds == 0) {
+            return "0s";
+        }
+
+        long minute = seconds / 60;
+        seconds = seconds % 60;
+        long hour = minute / 60;
+        minute = minute % 60;
+        long day = hour / 24;
+        hour = hour % 24;
+
+        StringBuilder time = new StringBuilder();
+        if (day != 0) {
+            time.append(day).append("d ");
+        }
+        if (hour != 0) {
+            time.append(hour).append("h ");
+        }
+        if (minute != 0) {
+            time.append(minute).append("m ");
+        }
+        if (seconds != 0) {
+            time.append(seconds).append("s");
+        }
+
+        return time.toString().trim();
+    }
+
+    @Override
+    public String formatBoolean(boolean b) {
+        return b ? "yes" : "no";
     }
 
 }
