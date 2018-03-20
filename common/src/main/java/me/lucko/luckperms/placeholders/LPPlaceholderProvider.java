@@ -27,6 +27,7 @@ package me.lucko.luckperms.placeholders;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -35,8 +36,11 @@ import me.lucko.luckperms.api.LuckPermsApi;
 import me.lucko.luckperms.api.Node;
 import me.lucko.luckperms.api.Track;
 import me.lucko.luckperms.api.User;
+import me.lucko.luckperms.api.caching.MetaContexts;
 import me.lucko.luckperms.api.caching.PermissionData;
 import me.lucko.luckperms.api.caching.UserData;
+import me.lucko.luckperms.api.metastacking.MetaStackDefinition;
+import me.lucko.luckperms.api.metastacking.MetaStackElement;
 
 import org.bukkit.entity.Player;
 
@@ -207,9 +211,30 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
         });
-        builder.addStatic("prefix", (player, user, userData) -> Strings.nullToEmpty(userData.calculateMeta(this.api.getContextsForPlayer(player)).getPrefix()));
-        builder.addStatic("suffix", (player, user, userData) -> Strings.nullToEmpty(userData.calculateMeta(this.api.getContextsForPlayer(player)).getSuffix()));
+        builder.addStatic("prefix", (player, user, userData) -> Strings.nullToEmpty(userData.getMetaData(this.api.getContextsForPlayer(player)).getPrefix()));
+        builder.addStatic("suffix", (player, user, userData) -> Strings.nullToEmpty(userData.getMetaData(this.api.getContextsForPlayer(player)).getSuffix()));
         builder.addDynamic("meta", (player, user, userData, node) -> userData.getMetaData(this.api.getContextsForPlayer(player)).getMeta().getOrDefault(node, ""));
+        builder.addDynamic("prefix_element", (player, user, userData, element) -> {
+            MetaStackElement stackElement = this.api.getMetaStackFactory().fromString(element).orElse(null);
+            if (stackElement == null) {
+                return "ERROR: Invalid element!";
+            }
+
+            MetaStackDefinition stackDefinition = this.api.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), "", "", "");
+            MetaContexts contexts = MetaContexts.of(this.api.getContextsForPlayer(player), stackDefinition, stackDefinition);
+            return Strings.nullToEmpty(userData.getMetaData(contexts).getPrefix());
+        });
+
+        builder.addDynamic("suffix_element", (player, user, userData, element) -> {
+            MetaStackElement stackElement = this.api.getMetaStackFactory().fromString(element).orElse(null);
+            if (stackElement == null) {
+                return "ERROR: Invalid element!";
+            }
+
+            MetaStackDefinition stackDefinition = this.api.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), "", "", "");
+            MetaContexts contexts = MetaContexts.of(this.api.getContextsForPlayer(player), stackDefinition, stackDefinition);
+            return Strings.nullToEmpty(userData.getMetaData(contexts).getSuffix());
+        });
     }
 
     @Override
