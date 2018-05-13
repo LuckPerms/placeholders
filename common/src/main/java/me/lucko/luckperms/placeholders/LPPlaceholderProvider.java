@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import me.lucko.luckperms.api.Contexts;
 import me.lucko.luckperms.api.Group;
 import me.lucko.luckperms.api.LuckPermsApi;
 import me.lucko.luckperms.api.Node;
@@ -82,41 +83,45 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
     }
 
     private void setup(PlaceholderBuilder builder) {
-        builder.addDynamic("context", (player, user, userData, key) ->
+        builder.addDynamic("context", (player, user, userData, contexts, key) ->
                 this.api.getContextManager().getApplicableContext(player).getValues(key).stream()
                         .collect(Collectors.joining(", "))
         );
-        builder.addStatic("groups", (player, user, userData) ->
+        builder.addStatic("groups", (player, user, userData, contexts) ->
                 user.getOwnNodes()
                         .stream()
                         .filter(Node::isGroupNode)
+                        .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                         .map(Node::getGroupName)
                         .map(this::convertGroupDisplayName)
                         .collect(Collectors.joining(", "))
         );
-        builder.addStatic("primary_group_name", (player, user, userData) -> convertGroupDisplayName(user.getPrimaryGroup()));
-        builder.addDynamic("has_permission", (player, user, userData, node) ->
+        builder.addStatic("primary_group_name", (player, user, userData, contexts) -> convertGroupDisplayName(user.getPrimaryGroup()));
+        builder.addDynamic("has_permission", (player, user, userData, contexts, node) ->
                 user.getOwnNodes().stream()
+                        .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                         .anyMatch(n -> n.getPermission().equals(node))
         );
-        builder.addDynamic("inherits_permission", (player, user, userData, node) ->
-                user.getAllNodes().stream()
+        builder.addDynamic("inherits_permission", (player, user, userData, contexts, node) ->
+                user.resolveInheritances(contexts).stream()
+                        .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                         .anyMatch(n -> n.getPermission().equals(node))
         );
-        builder.addDynamic("check_permission", (player, user, userData, node) -> player.hasPermission(node));
-        builder.addDynamic("in_group", (player, user, userData, groupName) ->
+        builder.addDynamic("check_permission", (player, user, userData, contexts, node) -> player.hasPermission(node));
+        builder.addDynamic("in_group", (player, user, userData, contexts, groupName) ->
                 user.getOwnNodes().stream()
                         .filter(Node::isGroupNode)
+                        .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                         .map(Node::getGroupName)
                         .anyMatch(s -> s.equalsIgnoreCase(groupName))
         );
-        builder.addDynamic("inherits_group", (player, user, userData, groupName) -> player.hasPermission("group." + groupName));
-        builder.addDynamic("on_track", (player, user, userData, trackName) ->
+        builder.addDynamic("inherits_group", (player, user, userData, contexts, groupName) -> player.hasPermission("group." + groupName));
+        builder.addDynamic("on_track", (player, user, userData, contexts, trackName) ->
                 this.api.getTrackSafe(trackName)
                         .map(t -> t.containsGroup(user.getPrimaryGroup()))
                         .orElse(false)
         );
-        builder.addDynamic("has_groups_on_track", (player, user, userData, trackName) ->
+        builder.addDynamic("has_groups_on_track", (player, user, userData, contexts, trackName) ->
                 this.api.getTrackSafe(trackName)
                         .map(t -> user.getOwnNodes().stream()
                                 .filter(Node::isGroupNode)
@@ -125,9 +130,10 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         )
                 .orElse(false)
         );
-        builder.addStatic("highest_group_by_weight", (player, user, userData) ->
+        builder.addStatic("highest_group_by_weight", (player, user, userData, contexts) ->
                 user.getPermissions().stream()
                         .filter(Node::isGroupNode)
+                        .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                         .map(Node::getGroupName)
                         .map(this.api::getGroup)
                         .filter(Objects::nonNull)
@@ -140,9 +146,10 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
-        builder.addStatic("lowest_group_by_weight", (player, user, userData) ->
+        builder.addStatic("lowest_group_by_weight", (player, user, userData, contexts) ->
                 user.getPermissions().stream()
                         .filter(Node::isGroupNode)
+                        .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                         .map(Node::getGroupName)
                         .map(this.api::getGroup)
                         .filter(Objects::nonNull)
@@ -155,9 +162,9 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
-        builder.addDynamic("first_group_on_tracks", (player, user, userData, argument) -> {
+        builder.addDynamic("first_group_on_tracks", (player, user, userData, contexts, argument) -> {
             List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
-            PermissionData permData = userData.getPermissionData(this.api.getContextsForPlayer(player));
+            PermissionData permData = userData.getPermissionData(contexts);
             return tracks.stream()
                     .map(this.api::getTrack)
                     .filter(Objects::nonNull)
@@ -172,9 +179,9 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .map(this::convertGroupDisplayName)
                     .orElse("");
         });
-        builder.addDynamic("last_group_on_tracks", (player, user, userData, argument) -> {
+        builder.addDynamic("last_group_on_tracks", (player, user, userData, contexts, argument) -> {
             List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
-            PermissionData permData = userData.getPermissionData(this.api.getContextsForPlayer(player));
+            PermissionData permData = userData.getPermissionData(contexts);
             return tracks.stream()
                     .map(this.api::getTrack)
                     .filter(Objects::nonNull)
@@ -190,59 +197,62 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .map(this::convertGroupDisplayName)
                     .orElse("");
         });
-        builder.addDynamic("expiry_time", (player, user, userData, node) -> {
+        builder.addDynamic("expiry_time", (player, user, userData, contexts, node) -> {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getPermissions().stream()
                     .filter(Node::isTemporary)
                     .filter(n -> n.getPermission().equals(node))
+                    .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                     .map(Node::getExpiryUnixTime)
                     .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
         });
-        builder.addDynamic("inherited_expiry_time", (player, user, userData, node) -> {
+        builder.addDynamic("inherited_expiry_time", (player, user, userData, contexts, node) -> {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getAllNodes().stream()
                     .filter(Node::isTemporary)
                     .filter(n -> n.getPermission().equals(node))
+                    .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                     .map(Node::getExpiryUnixTime)
                     .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
         });
-        builder.addDynamic("group_expiry_time", (player, user, userData, group) -> {
+        builder.addDynamic("group_expiry_time", (player, user, userData, contexts, group) -> {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getPermissions().stream()
                     .filter(Node::isTemporary)
                     .filter(Node::isGroupNode)
                     .filter(n -> n.getGroupName().equalsIgnoreCase(group))
+                    .filter(n -> n.shouldApplyWithContext(contexts.getContexts()))
                     .map(Node::getExpiryUnixTime)
                     .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
         });
-        builder.addStatic("prefix", (player, user, userData) -> Strings.nullToEmpty(userData.getMetaData(this.api.getContextsForPlayer(player)).getPrefix()));
-        builder.addStatic("suffix", (player, user, userData) -> Strings.nullToEmpty(userData.getMetaData(this.api.getContextsForPlayer(player)).getSuffix()));
-        builder.addDynamic("meta", (player, user, userData, node) -> userData.getMetaData(this.api.getContextsForPlayer(player)).getMeta().getOrDefault(node, ""));
-        builder.addDynamic("prefix_element", (player, user, userData, element) -> {
+        builder.addStatic("prefix", (player, user, userData, contexts) -> Strings.nullToEmpty(userData.getMetaData(this.api.getContextsForPlayer(player)).getPrefix()));
+        builder.addStatic("suffix", (player, user, userData, contexts) -> Strings.nullToEmpty(userData.getMetaData(this.api.getContextsForPlayer(player)).getSuffix()));
+        builder.addDynamic("meta", (player, user, userData, contexts, node) -> userData.getMetaData(this.api.getContextsForPlayer(player)).getMeta().getOrDefault(node, ""));
+        builder.addDynamic("prefix_element", (player, user, userData, contexts, element) -> {
             MetaStackElement stackElement = this.api.getMetaStackFactory().fromString(element).orElse(null);
             if (stackElement == null) {
                 return "ERROR: Invalid element!";
             }
 
             MetaStackDefinition stackDefinition = this.api.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), "", "", "");
-            MetaContexts contexts = MetaContexts.of(this.api.getContextsForPlayer(player), stackDefinition, stackDefinition);
-            return Strings.nullToEmpty(userData.getMetaData(contexts).getPrefix());
+            MetaContexts metaContexts = MetaContexts.of(contexts, stackDefinition, stackDefinition);
+            return Strings.nullToEmpty(userData.getMetaData(metaContexts).getPrefix());
         });
-        builder.addDynamic("suffix_element", (player, user, userData, element) -> {
+        builder.addDynamic("suffix_element", (player, user, userData, contexts, element) -> {
             MetaStackElement stackElement = this.api.getMetaStackFactory().fromString(element).orElse(null);
             if (stackElement == null) {
                 return "ERROR: Invalid element!";
             }
 
             MetaStackDefinition stackDefinition = this.api.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), "", "", "");
-            MetaContexts contexts = MetaContexts.of(this.api.getContextsForPlayer(player), stackDefinition, stackDefinition);
-            return Strings.nullToEmpty(userData.getMetaData(contexts).getSuffix());
+            MetaContexts metaContexts = MetaContexts.of(contexts, stackDefinition, stackDefinition);
+            return Strings.nullToEmpty(userData.getMetaData(metaContexts).getSuffix());
         });
     }
 
@@ -254,6 +264,8 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
         }
 
         UserData data = user.getCachedData();
+        Contexts contexts = this.api.getContextsForPlayer(player);
+
         placeholder = placeholder.toLowerCase();
 
         for (Map.Entry<String, Placeholder> entry : this.placeholders.entrySet()) {
@@ -268,7 +280,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
 
                 if (placeholder.startsWith(id) && placeholder.length() > id.length()) {
                     String argument = placeholder.substring(id.length());
-                    result = dp.handle(player, user, data, argument);
+                    result = dp.handle(player, user, data, contexts, argument);
                     handled = true;
                 }
 
@@ -276,7 +288,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                 StaticPlaceholder sp = (StaticPlaceholder) p;
 
                 if (placeholder.equals(id)) {
-                    result = sp.handle(player, user, data);
+                    result = sp.handle(player, user, data, contexts);
                     handled = true;
                 }
             }
@@ -360,7 +372,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
      */
     @FunctionalInterface
     private interface DynamicPlaceholder extends Placeholder {
-        Object handle(Player player, User user, UserData userData, String argument);
+        Object handle(Player player, User user, UserData userData, Contexts contexts, String argument);
     }
 
     /**
@@ -368,7 +380,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
      */
     @FunctionalInterface
     private interface StaticPlaceholder extends Placeholder {
-        Object handle(Player player, User user, UserData userData);
+        Object handle(Player player, User user, UserData userData, Contexts contexts);
     }
 
 }
