@@ -68,15 +68,21 @@
         <dependency>
             <groupId>be.maximvdw</groupId>
             <artifactId>MVdWPlaceholderAPI</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>3.0.1-SNAPSHOT</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>be.maximvdw</groupId>
+                    <artifactId>MVdWUpdater</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
     <repositories>
         <repository>
-            <id>mvdw-software</id>
-            <url>http://repo.mvdw-software.be/content/groups/public/</url>
+            <id>luck-repo</id>
+            <url>https://repo.lucko.me/</url>
         </repository>
     </repositories>
 
