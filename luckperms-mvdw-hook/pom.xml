@@ -7,7 +7,7 @@
     <parent>
         <groupId>me.lucko</groupId>
         <artifactId>luckperms-placeholders</artifactId>
-        <version>4.1-SNAPSHOT</version>
+        <version>5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>luckperms-mvdw-hook</artifactId>
@@ -60,7 +60,7 @@
         <dependency>
             <groupId>me.lucko</groupId>
             <artifactId>placeholders-common</artifactId>
-            <version>4.1-SNAPSHOT</version>
+            <version>5.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 

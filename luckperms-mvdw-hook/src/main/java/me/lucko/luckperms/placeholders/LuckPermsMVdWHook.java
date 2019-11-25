@@ -25,14 +25,12 @@
 
 package me.lucko.luckperms.placeholders;
 
-import me.lucko.luckperms.api.LuckPermsApi;
-
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import be.maximvdw.placeholderapi.PlaceholderAPI;
 import be.maximvdw.placeholderapi.PlaceholderReplaceEvent;
 import be.maximvdw.placeholderapi.PlaceholderReplacer;
+import net.luckperms.api.LuckPerms;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * MVdWPlaceholderAPI Hook for LuckPerms, implemented using the LuckPerms API.
@@ -42,12 +40,12 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
 
     @Override
     public void onEnable() {
-        if (!getServer().getServicesManager().isProvidedFor(LuckPermsApi.class)) {
-            throw new RuntimeException("LuckPermsApi not provided.");
+        if (!getServer().getServicesManager().isProvidedFor(LuckPerms.class)) {
+            throw new RuntimeException("LuckPerms API not provided.");
         }
 
-        LuckPermsApi api = getServer().getServicesManager().load(LuckPermsApi.class);
-        this.provider = new LPPlaceholderProvider(this, api);
+        LuckPerms luckPerms = getServer().getServicesManager().load(LuckPerms.class);
+        this.provider = new LPPlaceholderProvider(this, luckPerms);
         PlaceholderAPI.registerPlaceholder(this, "luckperms_*", this);
     }
 

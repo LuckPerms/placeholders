@@ -28,8 +28,7 @@ package me.lucko.luckperms.placeholders;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.clip.placeholderapi.util.TimeUtil;
-import me.lucko.luckperms.api.LuckPermsApi;
-
+import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -40,13 +39,13 @@ public class LuckPermsExpansion extends PlaceholderExpansion implements Placehol
     private static final String IDENTIFIER = "luckperms";
     private static final String PLUGIN_NAME = "LuckPerms";
     private static final String AUTHOR = "Luck";
-    private static final String VERSION = "4.1";
+    private static final String VERSION = "5.0";
 
     private LPPlaceholderProvider provider;
 
     @Override
     public boolean canRegister() {
-        return Bukkit.getServicesManager().isProvidedFor(LuckPermsApi.class);
+        return Bukkit.getServicesManager().isProvidedFor(LuckPerms.class);
     }
 
     @Override
@@ -55,8 +54,8 @@ public class LuckPermsExpansion extends PlaceholderExpansion implements Placehol
             return false;
         }
 
-        LuckPermsApi api = Bukkit.getServicesManager().getRegistration(LuckPermsApi.class).getProvider();
-        this.provider = new LPPlaceholderProvider(this, api);
+        LuckPerms luckPerms = Bukkit.getServicesManager().getRegistration(LuckPerms.class).getProvider();
+        this.provider = new LPPlaceholderProvider(this, luckPerms);
         return super.register();
     }
 
