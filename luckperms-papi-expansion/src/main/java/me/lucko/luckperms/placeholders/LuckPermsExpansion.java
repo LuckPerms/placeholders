@@ -65,7 +65,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion implements Placehol
             return "";
         }
 
-        return this.provider.onPlaceholderRequest(player, identifier);
+        return this.provider.onPlaceholderRequest(player, player.getUniqueId(), identifier);
     }
 
     @Override

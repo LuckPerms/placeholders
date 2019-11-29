@@ -22,7 +22,7 @@
 
 package me.lucko.luckperms.placeholders;
 
-import org.bukkit.entity.Player;
+import java.util.UUID;
 
 /**
  * Generic interface for a object that handles placeholder requests
@@ -30,13 +30,6 @@ import org.bukkit.entity.Player;
 @FunctionalInterface
 public interface PlaceholderProvider {
 
-    /**
-     * Handles a placeholder request
-     *
-     * @param player the player placeholders are being requested for
-     * @param placeholder the placeholder string
-     * @return the resultant value
-     */
-    String onPlaceholderRequest(Player player, String placeholder);
+    String onPlaceholderRequest(Object player, UUID playerUuid, String placeholder);
 
 }

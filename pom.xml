@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>me.lucko</groupId>
+    <groupId>me.lucko.luckperms</groupId>
     <artifactId>luckperms-placeholders</artifactId>
     <version>5.0-SNAPSHOT</version>
 
@@ -32,13 +32,6 @@
             <groupId>net.luckperms</groupId>
             <artifactId>api</artifactId>
             <version>5.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- BukkitAPI -->
-        <dependency>
-            <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
-            <version>1.12.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

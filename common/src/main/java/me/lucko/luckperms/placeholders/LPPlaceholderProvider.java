@@ -43,7 +43,6 @@ import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.InheritanceNode;
 import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.track.Track;
-import org.bukkit.entity.Player;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -51,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -85,8 +85,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
 
     private void setup(PlaceholderBuilder builder) {
         builder.addDynamic("context", (player, user, userData, queryOptions, key) ->
-                this.luckPerms.getContextManager().getContext(player).getValues(key).stream()
-                        .collect(Collectors.joining(", "))
+                String.join(", ", this.luckPerms.getContextManager().getContext(player).getValues(key))
         );
         builder.addStatic("groups", (player, user, userData, queryOptions) ->
                 user.getNodes()
@@ -109,7 +108,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .filter(n -> n.getContexts().isSatisfiedBy(queryOptions.context()))
                         .anyMatch(n -> n.getKey().equals(node))
         );
-        builder.addDynamic("check_permission", (player, user, userData, queryOptions, node) -> player.hasPermission(node));
+        builder.addDynamic("check_permission", (player, user, userData, queryOptions, node) -> user.getCachedData().getPermissionData(queryOptions).checkPermission(node).asBoolean());
         builder.addDynamic("in_group", (player, user, userData, queryOptions, groupName) ->
                 user.getNodes().stream()
                         .filter(NodeType.INHERITANCE::matches)
@@ -118,7 +117,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(InheritanceNode::getGroupName)
                         .anyMatch(s -> s.equalsIgnoreCase(groupName))
         );
-        builder.addDynamic("inherits_group", (player, user, userData, queryOptions, groupName) -> player.hasPermission("group." + groupName));
+        builder.addDynamic("inherits_group", (player, user, userData, queryOptions, groupName) -> user.getCachedData().getPermissionData(queryOptions).checkPermission("group." + groupName).asBoolean());
         builder.addDynamic("on_track", (player, user, userData, queryOptions, trackName) ->
                 Optional.ofNullable(this.luckPerms.getTrackManager().getTrack(trackName))
                         .map(t -> t.containsGroup(user.getPrimaryGroup()))
@@ -274,8 +273,8 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
     }
 
     @Override
-    public String onPlaceholderRequest(Player player, String placeholder) {
-        User user = this.luckPerms.getUserManager().getUser(player.getUniqueId());
+    public String onPlaceholderRequest(Object player, UUID playerUuid, String placeholder) {
+        User user = this.luckPerms.getUserManager().getUser(playerUuid);
         if (user == null) {
             return "";
         }
@@ -389,7 +388,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
      */
     @FunctionalInterface
     private interface DynamicPlaceholder extends Placeholder {
-        Object handle(Player player, User user, CachedDataManager userData, QueryOptions queryOptions, String argument);
+        Object handle(Object player, User user, CachedDataManager userData, QueryOptions queryOptions, String argument);
     }
 
     /**
@@ -397,7 +396,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
      */
     @FunctionalInterface
     private interface StaticPlaceholder extends Placeholder {
-        Object handle(Player player, User user, CachedDataManager userData, QueryOptions queryOptions);
+        Object handle(Object player, User user, CachedDataManager userData, QueryOptions queryOptions);
     }
 
 }

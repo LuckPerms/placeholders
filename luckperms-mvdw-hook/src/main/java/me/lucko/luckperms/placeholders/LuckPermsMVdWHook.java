@@ -63,7 +63,7 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
             return "";
         }
 
-        return this.provider.onPlaceholderRequest(player, identifier);
+        return this.provider.onPlaceholderRequest(player, player.getUniqueId(), identifier);
     }
 
     @Override
