@@ -207,7 +207,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .filter(n -> n.getKey().equals(node))
                     .filter(n -> n.getContexts().isSatisfiedBy(queryOptions.context()))
                     .map(Node::getExpiry)
-                    .map(Instant::toEpochMilli)
+                    .map(Instant::getEpochSecond)
                     .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
@@ -219,7 +219,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .filter(n -> n.getKey().equals(node))
                     .filter(n -> n.getContexts().isSatisfiedBy(queryOptions.context()))
                     .map(Node::getExpiry)
-                    .map(Instant::toEpochMilli)
+                    .map(Instant::getEpochSecond)
                     .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
@@ -233,7 +233,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .filter(n -> n.getGroupName().equalsIgnoreCase(group))
                     .filter(n -> n.getContexts().isSatisfiedBy(queryOptions.context()))
                     .map(Node::getExpiry)
-                    .map(Instant::toEpochMilli)
+                    .map(Instant::getEpochSecond)
                     .findFirst()
                     .map(e -> formatTime((int) (e - currentTime)))
                     .orElse("");
