@@ -204,6 +204,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getNodes().stream()
                     .filter(Node::hasExpiry)
+                    .filter(n -> !n.hasExpired())
                     .filter(n -> n.getKey().equals(node))
                     .filter(n -> n.getContexts().isSatisfiedBy(queryOptions.context()))
                     .map(Node::getExpiry)
@@ -216,6 +217,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.resolveInheritedNodes(QueryOptions.nonContextual()).stream()
                     .filter(Node::hasExpiry)
+                    .filter(n -> !n.hasExpired())
                     .filter(n -> n.getKey().equals(node))
                     .filter(n -> n.getContexts().isSatisfiedBy(queryOptions.context()))
                     .map(Node::getExpiry)
@@ -228,6 +230,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
             long currentTime = System.currentTimeMillis() / 1000L;
             return user.getNodes().stream()
                     .filter(Node::hasExpiry)
+                    .filter(n -> !n.hasExpired())
                     .filter(NodeType.INHERITANCE::matches)
                     .map(NodeType.INHERITANCE::cast)
                     .filter(n -> n.getGroupName().equalsIgnoreCase(group))
