@@ -149,7 +149,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(InheritanceNode::getGroupName)
                         .map(n -> this.luckPerms.getGroupManager().getGroup(n))
                         .filter(Objects::nonNull)
-                        .min(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
+                        .max(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
                         .map(Group::getName)
                         .map(this::convertGroupDisplayName)
                         .orElse("")
@@ -160,21 +160,21 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(InheritanceNode::getGroupName)
                         .map(n -> this.luckPerms.getGroupManager().getGroup(n))
                         .filter(Objects::nonNull)
-                        .max(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
+                        .min(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
                         .map(Group::getName)
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
         builder.addStatic("highest_inherited_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getInheritedGroups(queryOptions).stream()
-                        .min(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
+                        .max(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
                         .map(Group::getName)
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
         builder.addStatic("lowest_inherited_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getInheritedGroups(queryOptions).stream()
-                        .max(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
+                        .min(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
                         .map(Group::getName)
                         .map(this::convertGroupDisplayName)
                         .orElse("")
