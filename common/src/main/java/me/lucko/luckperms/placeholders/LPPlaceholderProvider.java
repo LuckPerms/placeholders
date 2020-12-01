@@ -260,9 +260,13 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
         );
         builder.addStatic("prefix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getPrefix()));
         builder.addStatic("suffix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getSuffix()));
-        builder.addDynamic("meta", (player, user, userData, queryOptions, node) -> {
+        builder.addDynamic("meta_all", (player, user, userData, queryOptions, node) -> {
             List<String> values = userData.getMetaData(queryOptions).getMeta().getOrDefault(node, ImmutableList.of());
-            return values.isEmpty() ? "" : values.iterator().next();
+            return values.isEmpty() ? "" : String.join(", ", values);
+        });
+        builder.addDynamic("meta", (player, user, userData, queryOptions, node) -> {
+            String value = userData.getMetaData(queryOptions).getMetaValue(node);
+            return value == null ? "" : value;
         });
         builder.addDynamic("prefix_element", (player, user, userData, queryOptions, element) -> {
             MetaStackElement stackElement = this.luckPerms.getMetaStackFactory().fromString(element).orElse(null);
