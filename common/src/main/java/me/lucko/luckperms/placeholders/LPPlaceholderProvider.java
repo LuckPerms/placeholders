@@ -86,6 +86,50 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
     }
 
     private void setup(PlaceholderBuilder builder) {
+        builder.addStatic("prefix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getPrefix()));
+
+        builder.addStatic("suffix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getSuffix()));
+
+        builder.addDynamic("meta", (player, user, userData, queryOptions, node) -> {
+            String value = userData.getMetaData(queryOptions).getMetaValue(node);
+            return value == null ? "" : value;
+        });
+
+        builder.addDynamic("meta_all", (player, user, userData, queryOptions, node) -> {
+            List<String> values = userData.getMetaData(queryOptions).getMeta().getOrDefault(node, ImmutableList.of());
+            return values.isEmpty() ? "" : String.join(", ", values);
+        });
+
+        builder.addDynamic("prefix_element", (player, user, userData, queryOptions, element) -> {
+            MetaStackElement stackElement = this.luckPerms.getMetaStackFactory().fromString(element).orElse(null);
+            if (stackElement == null) {
+                return "ERROR: Invalid element!";
+            }
+
+            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
+            QueryOptions newOptions = queryOptions.toBuilder()
+                    .option(MetaStackDefinition.PREFIX_STACK_KEY, stackDefinition)
+                    .option(MetaStackDefinition.SUFFIX_STACK_KEY, stackDefinition)
+                    .build();
+
+            return Strings.nullToEmpty(userData.getMetaData(newOptions).getPrefix());
+        });
+
+        builder.addDynamic("suffix_element", (player, user, userData, queryOptions, element) -> {
+            MetaStackElement stackElement = this.luckPerms.getMetaStackFactory().fromString(element).orElse(null);
+            if (stackElement == null) {
+                return "ERROR: Invalid element!";
+            }
+
+            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
+            QueryOptions newOptions = queryOptions.toBuilder()
+                    .option(MetaStackDefinition.PREFIX_STACK_KEY, stackDefinition)
+                    .option(MetaStackDefinition.SUFFIX_STACK_KEY, stackDefinition)
+                    .build();
+
+            return Strings.nullToEmpty(userData.getMetaData(newOptions).getSuffix());
+        });
+
         builder.addStatic("context", (player, user, userData, queryOptions) ->
                 this.luckPerms.getContextManager().getContext(player).toSet().stream()
                         .map(c -> c.getKey() + "=" + c.getValue())
@@ -94,6 +138,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
         builder.addDynamic("context", (player, user, userData, queryOptions, key) ->
                 String.join(", ", this.luckPerms.getContextManager().getContext(player).getValues(key))
         );
+
         builder.addStatic("groups", (player, user, userData, queryOptions) ->
                 user.getNodes(NodeType.INHERITANCE)
                         .stream()
@@ -102,40 +147,49 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .collect(Collectors.joining(", "))
         );
+
         builder.addStatic("inherited_groups", (player, user, userData, queryOptions) ->
                 user.getInheritedGroups(queryOptions)
                         .stream()
                         .map(Group::getFriendlyName)
                         .collect(Collectors.joining(", "))
         );
+
         builder.addStatic("primary_group_name", (player, user, userData, queryOptions) -> convertGroupDisplayName(user.getPrimaryGroup()));
+
         builder.addDynamic("has_permission", (player, user, userData, queryOptions, node) ->
                 user.getNodes().stream()
                         .filter(n -> queryOptions.satisfies(n.getContexts()))
                         .anyMatch(n -> n.getKey().equals(node))
         );
+
         builder.addDynamic("inherits_permission", (player, user, userData, queryOptions, node) ->
                 user.resolveInheritedNodes(queryOptions).stream()
                         .filter(n -> n.getContexts().isSatisfiedBy(queryOptions.context()))
                         .anyMatch(n -> n.getKey().equals(node))
         );
+
         builder.addDynamic("check_permission", (player, user, userData, queryOptions, node) -> user.getCachedData().getPermissionData(queryOptions).checkPermission(node).asBoolean());
+
         builder.addDynamic("in_group", (player, user, userData, queryOptions, groupName) ->
                 user.getNodes(NodeType.INHERITANCE).stream()
                         .filter(n -> queryOptions.satisfies(n.getContexts()))
                         .map(InheritanceNode::getGroupName)
                         .anyMatch(s -> s.equalsIgnoreCase(groupName))
         );
+
         builder.addDynamic("inherits_group", (player, user, userData, queryOptions, groupName) ->
                 user.getInheritedGroups(queryOptions)
                         .stream()
                         .anyMatch(g -> g.getName().equalsIgnoreCase(groupName))
         );
+
         builder.addDynamic("on_track", (player, user, userData, queryOptions, trackName) ->
                 Optional.ofNullable(this.luckPerms.getTrackManager().getTrack(trackName))
                         .map(t -> t.containsGroup(user.getPrimaryGroup()))
                         .orElse(false)
         );
+
         builder.addDynamic("has_groups_on_track", (player, user, userData, queryOptions, trackName) ->
                 Optional.ofNullable(this.luckPerms.getTrackManager().getTrack(trackName))
                         .map(t -> user.getNodes(NodeType.INHERITANCE).stream()
@@ -144,6 +198,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         )
                 .orElse(false)
         );
+
         builder.addStatic("highest_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getNodes(NodeType.INHERITANCE).stream()
                         .filter(n -> queryOptions.satisfies(n.getContexts()))
@@ -155,6 +210,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
+
         builder.addStatic("lowest_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getNodes(NodeType.INHERITANCE).stream()
                         .filter(n -> queryOptions.satisfies(n.getContexts()))
@@ -166,6 +222,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
+
         builder.addStatic("highest_inherited_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getInheritedGroups(queryOptions).stream()
                         .max(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
@@ -173,6 +230,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
+
         builder.addStatic("lowest_inherited_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getInheritedGroups(queryOptions).stream()
                         .min(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
@@ -180,40 +238,10 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::convertGroupDisplayName)
                         .orElse("")
         );
-        builder.addDynamic("first_group_on_tracks", (player, user, userData, queryOptions, argument) -> {
-            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
-            Set<String> groups = user.getInheritedGroups(queryOptions).stream().map(Group::getName).collect(Collectors.toSet());
 
-            return tracks.stream()
-                    .map(n -> this.luckPerms.getTrackManager().getTrack(n))
-                    .filter(Objects::nonNull)
-                    .map(Track::getGroups)
-                    .map(trackGroups -> trackGroups.stream().filter(groups::contains).findFirst())
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .findFirst()
-                    .map(this::convertGroupDisplayName)
-                    .orElse("");
-        });
-        builder.addDynamic("last_group_on_tracks", (player, user, userData, queryOptions, argument) -> {
-            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
-            Set<String> groups = user.getInheritedGroups(queryOptions).stream().map(Group::getName).collect(Collectors.toSet());
-
-            return tracks.stream()
-                    .map(n -> this.luckPerms.getTrackManager().getTrack(n))
-                    .filter(Objects::nonNull)
-                    .map(Track::getGroups)
-                    .map(Lists::reverse)
-                    .map(trackGroups -> trackGroups.stream().filter(groups::contains).findFirst())
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .findFirst()
-                    .map(this::convertGroupDisplayName)
-                    .orElse("");
-        });
         builder.addDynamic("current_group_on_track", (player, user, userData, queryOptions, trackName) -> {
             Track track = this.luckPerms.getTrackManager().getTrack(trackName);
-            if (track == null || track.getGroups().size() <= 1) {
+            if (track == null) {
                 return "";
             }
 
@@ -230,6 +258,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
 
             return groups.get(0).getFriendlyName();
         });
+
         builder.addDynamic("next_group_on_track", (player, user, userData, queryOptions, trackName) -> {
             Track track = this.luckPerms.getTrackManager().getTrack(trackName);
             if (track == null || track.getGroups().size() <= 1) {
@@ -249,6 +278,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
 
             return Strings.nullToEmpty(convertGroupDisplayName(track.getNext(groups.get(0))));
         });
+
         builder.addDynamic("previous_group_on_track", (player, user, userData, queryOptions, trackName) -> {
             Track track = this.luckPerms.getTrackManager().getTrack(trackName);
             if (track == null || track.getGroups().size() <= 1) {
@@ -268,6 +298,40 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
 
             return Strings.nullToEmpty(convertGroupDisplayName(track.getPrevious(groups.get(0))));
         });
+
+        builder.addDynamic("first_group_on_tracks", (player, user, userData, queryOptions, argument) -> {
+            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
+            Set<String> groups = user.getInheritedGroups(queryOptions).stream().map(Group::getName).collect(Collectors.toSet());
+
+            return tracks.stream()
+                    .map(n -> this.luckPerms.getTrackManager().getTrack(n))
+                    .filter(Objects::nonNull)
+                    .map(Track::getGroups)
+                    .map(trackGroups -> trackGroups.stream().filter(groups::contains).findFirst())
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst()
+                    .map(this::convertGroupDisplayName)
+                    .orElse("");
+        });
+
+        builder.addDynamic("last_group_on_tracks", (player, user, userData, queryOptions, argument) -> {
+            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
+            Set<String> groups = user.getInheritedGroups(queryOptions).stream().map(Group::getName).collect(Collectors.toSet());
+
+            return tracks.stream()
+                    .map(n -> this.luckPerms.getTrackManager().getTrack(n))
+                    .filter(Objects::nonNull)
+                    .map(Track::getGroups)
+                    .map(Lists::reverse)
+                    .map(trackGroups -> trackGroups.stream().filter(groups::contains).findFirst())
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst()
+                    .map(this::convertGroupDisplayName)
+                    .orElse("");
+        });
+
         builder.addDynamic("expiry_time", (player, user, userData, queryOptions, node) ->
                 user.getNodes().stream()
                         .filter(Node::hasExpiry)
@@ -280,6 +344,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::formatDuration)
                         .orElse("")
         );
+
         builder.addDynamic("inherited_expiry_time", (player, user, userData, queryOptions, node) ->
                 user.resolveInheritedNodes(queryOptions).stream()
                         .filter(Node::hasExpiry)
@@ -291,6 +356,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::formatDuration)
                         .orElse("")
         );
+
         builder.addDynamic("group_expiry_time", (player, user, userData, queryOptions, group) ->
                 user.getNodes(NodeType.INHERITANCE).stream()
                         .filter(Node::hasExpiry)
@@ -303,6 +369,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::formatDuration)
                         .orElse("")
         );
+
         builder.addDynamic("inherited_group_expiry_time", (player, user, userData, queryOptions, group) ->
                 user.resolveInheritedNodes(queryOptions).stream()
                         .filter(Node::hasExpiry)
@@ -316,44 +383,6 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::formatDuration)
                         .orElse("")
         );
-        builder.addStatic("prefix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getPrefix()));
-        builder.addStatic("suffix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getSuffix()));
-        builder.addDynamic("meta_all", (player, user, userData, queryOptions, node) -> {
-            List<String> values = userData.getMetaData(queryOptions).getMeta().getOrDefault(node, ImmutableList.of());
-            return values.isEmpty() ? "" : String.join(", ", values);
-        });
-        builder.addDynamic("meta", (player, user, userData, queryOptions, node) -> {
-            String value = userData.getMetaData(queryOptions).getMetaValue(node);
-            return value == null ? "" : value;
-        });
-        builder.addDynamic("prefix_element", (player, user, userData, queryOptions, element) -> {
-            MetaStackElement stackElement = this.luckPerms.getMetaStackFactory().fromString(element).orElse(null);
-            if (stackElement == null) {
-                return "ERROR: Invalid element!";
-            }
-
-            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
-            QueryOptions newOptions = queryOptions.toBuilder()
-                    .option(MetaStackDefinition.PREFIX_STACK_KEY, stackDefinition)
-                    .option(MetaStackDefinition.SUFFIX_STACK_KEY, stackDefinition)
-                    .build();
-
-            return Strings.nullToEmpty(userData.getMetaData(newOptions).getPrefix());
-        });
-        builder.addDynamic("suffix_element", (player, user, userData, queryOptions, element) -> {
-            MetaStackElement stackElement = this.luckPerms.getMetaStackFactory().fromString(element).orElse(null);
-            if (stackElement == null) {
-                return "ERROR: Invalid element!";
-            }
-
-            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
-            QueryOptions newOptions = queryOptions.toBuilder()
-                    .option(MetaStackDefinition.PREFIX_STACK_KEY, stackDefinition)
-                    .option(MetaStackDefinition.SUFFIX_STACK_KEY, stackDefinition)
-                    .build();
-
-            return Strings.nullToEmpty(userData.getMetaData(newOptions).getSuffix());
-        });
     }
 
     @Override
