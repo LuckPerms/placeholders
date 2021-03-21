@@ -44,6 +44,7 @@ import net.luckperms.api.node.types.InheritanceNode;
 import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.track.Track;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -219,7 +220,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .filter(Objects::nonNull)
                         .filter(d -> !d.isNegative())
                         .findFirst()
-                        .map(d -> formatTime((int) d.getSeconds()))
+                        .map(this::formatDuration)
                         .orElse("")
         );
         builder.addDynamic("inherited_expiry_time", (player, user, userData, queryOptions, node) ->
@@ -230,7 +231,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .filter(Objects::nonNull)
                         .filter(d -> !d.isNegative())
                         .findFirst()
-                        .map(d -> formatTime((int) d.getSeconds()))
+                        .map(this::formatDuration)
                         .orElse("")
         );
         builder.addDynamic("group_expiry_time", (player, user, userData, queryOptions, group) ->
@@ -242,7 +243,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .filter(Objects::nonNull)
                         .filter(d -> !d.isNegative())
                         .findFirst()
-                        .map(d -> formatTime((int) d.getSeconds()))
+                        .map(this::formatDuration)
                         .orElse("")
         );
         builder.addDynamic("inherited_group_expiry_time", (player, user, userData, queryOptions, group) ->
@@ -255,7 +256,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .filter(Objects::nonNull)
                         .filter(d -> !d.isNegative())
                         .findFirst()
-                        .map(d -> formatTime((int) d.getSeconds()))
+                        .map(this::formatDuration)
                         .orElse("")
         );
         builder.addStatic("prefix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getPrefix()));
@@ -350,13 +351,13 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
     }
 
     /**
-     * Format a unix timestamp according to the placeholder platforms rules.
+     * Format a duration using the LuckPerms formatter.
      *
-     * @param time the time
-     * @return a formatted version of the time
+     * @param duration the duration
+     * @return a formatted version of the duration
      */
-    private String formatTime(int time) {
-        return this.platform.formatTime(time);
+    private String formatDuration(Duration duration) {
+        return DurationFormatter.CONCISE.format(duration);
     }
 
     /**

@@ -69,11 +69,6 @@ public class LuckPermsExpansion extends PlaceholderExpansion implements Placehol
     }
 
     @Override
-    public String formatTime(int time) {
-        return TimeUtil.getTime(time);
-    }
-
-    @Override
     public String formatBoolean(boolean b) {
         return b ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
     }
