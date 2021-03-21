@@ -211,6 +211,44 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .map(this::convertGroupDisplayName)
                     .orElse("");
         });
+        builder.addDynamic("next_group_on_track", (player, user, userData, queryOptions, trackName) -> {
+            Track track = this.luckPerms.getTrackManager().getTrack(trackName);
+            if (track == null || track.getGroups().size() <= 1) {
+                return "";
+            }
+
+            List<Group> groups = user.getNodes(NodeType.INHERITANCE).stream()
+                    .filter(n -> track.containsGroup(n.getGroupName()))
+                    .filter(n -> queryOptions.satisfies(n.getContexts()))
+                    .distinct()
+                    .map(n -> this.luckPerms.getGroupManager().getGroup(n.getGroupName()))
+                    .collect(Collectors.toList());
+
+            if (groups.size() != 1) {
+                return "";
+            }
+
+            return Strings.nullToEmpty(track.getNext(groups.get(0)));
+        });
+        builder.addDynamic("previous_group_on_track", (player, user, userData, queryOptions, trackName) -> {
+            Track track = this.luckPerms.getTrackManager().getTrack(trackName);
+            if (track == null || track.getGroups().size() <= 1) {
+                return "";
+            }
+
+            List<Group> groups = user.getNodes(NodeType.INHERITANCE).stream()
+                    .filter(n -> track.containsGroup(n.getGroupName()))
+                    .filter(n -> queryOptions.satisfies(n.getContexts()))
+                    .distinct()
+                    .map(n -> this.luckPerms.getGroupManager().getGroup(n.getGroupName()))
+                    .collect(Collectors.toList());
+
+            if (groups.size() != 1) {
+                return "";
+            }
+
+            return Strings.nullToEmpty(track.getPrevious(groups.get(0)));
+        });
         builder.addDynamic("expiry_time", (player, user, userData, queryOptions, node) ->
                 user.getNodes().stream()
                         .filter(Node::hasExpiry)
