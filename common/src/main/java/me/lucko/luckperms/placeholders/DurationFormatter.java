@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import java.util.Map;
 
 // Copied from https://github.com/lucko/LuckPerms/blob/master/common/src/main/java/me/lucko/luckperms/common/util/DurationFormatter.java
@@ -123,7 +124,7 @@ class DurationFormatter {
     
     private String formatPart(long amount, ChronoUnit unit) {
         String format = this.concise ? "short" : amount == 1 ? "singular" : "plural";
-        String translationKey = "luckperms.duration.unit." + unit.name().toLowerCase() + "." + format;
+        String translationKey = "luckperms.duration.unit." + unit.name().toLowerCase(Locale.ROOT) + "." + format;
         return String.format(TRANSLATIONS.get(translationKey), amount);
     }
 

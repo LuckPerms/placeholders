@@ -48,6 +48,7 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -395,7 +396,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
         CachedDataManager data = user.getCachedData();
         QueryOptions queryOptions = this.luckPerms.getContextManager().getQueryOptions(player);
 
-        placeholder = placeholder.toLowerCase();
+        placeholder = placeholder.toLowerCase(Locale.ROOT);
 
         for (Map.Entry<String, Placeholder> entry : this.placeholders.entrySet()) {
             String id = entry.getKey();

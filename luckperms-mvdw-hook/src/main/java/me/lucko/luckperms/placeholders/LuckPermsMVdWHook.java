@@ -32,6 +32,8 @@ import net.luckperms.api.LuckPerms;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Locale;
+
 /**
  * MVdWPlaceholderAPI Hook for LuckPerms, implemented using the LuckPerms API.
  */
@@ -56,7 +58,7 @@ public class LuckPermsMVdWHook extends JavaPlugin implements PlaceholderReplacer
             return null;
         }
 
-        String identifier = placeholder.substring("luckperms_".length()).toLowerCase();
+        String identifier = placeholder.substring("luckperms_".length()).toLowerCase(Locale.ROOT);
         Player player = event.getPlayer();
 
         if (player == null || this.provider == null) {
