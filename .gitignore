@@ -32,6 +32,10 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 
+### Gradle ###
+.gradle/
+build/
+
 
 ### Eclipse ###
 

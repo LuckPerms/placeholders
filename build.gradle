@@ -1,0 +1,35 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+defaultTasks 'build'
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    group = 'me.lucko.luckperms'
+    version = '5.1-SNAPSHOT'
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    repositories {
+        mavenLocal()
+        maven { url('https://hub.spigotmc.org/nexus/content/repositories/snapshots/') }
+        maven { url('https://repo.maven.apache.org/maven2/') }
+        maven { url('https://repo.lucko.me/') }
+    }
+
+    dependencies {
+        compileOnly 'net.luckperms:api:5.1'
+    }
+
+    artifacts {
+        archives shadowJar
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+}

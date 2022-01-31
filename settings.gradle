@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        maven {
+            url 'https://maven.fabricmc.net/'
+        }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'luckperms-placeholders'
+include(':placeholders-common')
+include(':luckperms-mvdw-hook')
+include(':luckperms-papi-expansion')
+project(":placeholders-common").projectDir = file('common')

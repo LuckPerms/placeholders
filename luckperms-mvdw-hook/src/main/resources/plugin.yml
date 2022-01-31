@@ -1,5 +1,5 @@
 name: LuckPermsMVdWHook
-version: ${project.version}
+version: ${pluginVersion}
 description: Provides placeholders for LuckPerms
 author: Luck
 website: https://github.com/lucko/LuckPerms/wiki/Placeholders
