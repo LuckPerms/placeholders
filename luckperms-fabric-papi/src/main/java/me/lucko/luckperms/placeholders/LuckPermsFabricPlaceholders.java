@@ -16,7 +16,7 @@ import net.minecraft.util.Identifier;
 
 import java.util.Map;
 
-public class Placeholders implements ModInitializer, PlaceholderPlatform {
+public class LuckPermsFabricPlaceholders implements ModInitializer, PlaceholderPlatform {
 
     @Override
     public void onInitialize() {

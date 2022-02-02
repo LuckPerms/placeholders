@@ -16,7 +16,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "me.lucko.luckperms.placeholders.Placeholders"
+      "me.lucko.luckperms.placeholders.LuckPermsFabricPlaceholders"
     ]
   },
   "depends": {
