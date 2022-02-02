@@ -10,7 +10,7 @@ description = 'luckperms-mvdw-hook'
 
 processResources {
     filesMatching('plugin.yml') {
-        expand 'pluginVersion': project.fullVersion
+        expand 'pluginVersion': project.version
     }
 }
 

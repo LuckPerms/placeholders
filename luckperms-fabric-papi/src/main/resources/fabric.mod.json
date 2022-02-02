@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "luckperms-placeholders",
+  "version": "${version}",
+  "name": "LuckPerms Placeholders",
+  "description": "Provides placeholders for LuckPerms",
+  "authors": [
+    "Luck",
+    "Potatoboy9999"
+  ],
+  "contact": {
+    "website": "https://luckperms.net/",
+    "repo": "https://github.com/LuckPerms/placeholders"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "me.lucko.luckperms.placeholders.Placeholders"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "minecraft": ">=1.17.1"
+  }
+}

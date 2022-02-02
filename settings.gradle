@@ -11,4 +11,5 @@ rootProject.name = 'luckperms-placeholders'
 include(':placeholders-common')
 include(':luckperms-mvdw-hook')
 include(':luckperms-papi-expansion')
+include(':luckperms-fabric-papi')
 project(":placeholders-common").projectDir = file('common')
