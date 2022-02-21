@@ -438,6 +438,11 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
         return null;
     }
 
+    @Override
+    public Map<String, Placeholder> getPlaceholders() {
+        return placeholders;
+    }
+
     /**
      * Format a duration using the LuckPerms formatter.
      *
@@ -495,28 +500,4 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
             return ImmutableMap.copyOf(this.placeholders);
         }
     }
-
-    /**
-     * Generic placeholder super interface
-     */
-    private interface Placeholder {
-
-    }
-
-    /**
-     * A placeholder which accepts an extra "argument" at the end of the placeholder
-     */
-    @FunctionalInterface
-    private interface DynamicPlaceholder extends Placeholder {
-        Object handle(Object player, User user, CachedDataManager userData, QueryOptions queryOptions, String argument);
-    }
-
-    /**
-     * A standard placeholder which don't accept any arguments
-     */
-    @FunctionalInterface
-    private interface StaticPlaceholder extends Placeholder {
-        Object handle(Object player, User user, CachedDataManager userData, QueryOptions queryOptions);
-    }
-
 }

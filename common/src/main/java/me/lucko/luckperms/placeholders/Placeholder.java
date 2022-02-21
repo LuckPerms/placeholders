@@ -25,16 +25,9 @@
 
 package me.lucko.luckperms.placeholders;
 
-import java.util.Map;
-import java.util.UUID;
-
 /**
- * Generic interface for a object that handles placeholder requests
+ * Generic placeholder super interface
  */
-public interface PlaceholderProvider {
-
-    String onPlaceholderRequest(Object player, UUID playerUuid, String placeholder);
-
-    Map<String, Placeholder> getPlaceholders();
+interface Placeholder {
 
 }

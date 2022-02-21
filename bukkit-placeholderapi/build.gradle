@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':common')
+    compileOnly 'org.bukkit:bukkit:1.12.2-R0.1-SNAPSHOT'
+    compileOnly 'me.clip:placeholderapi:2.8.2'
+}
+
+description = 'luckperms-papi-expansion'
+
+shadowJar {
+    archiveFileName = "Expansion-LuckPerms.jar"
+}

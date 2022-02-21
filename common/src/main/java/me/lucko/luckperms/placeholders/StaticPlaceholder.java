@@ -25,16 +25,14 @@
 
 package me.lucko.luckperms.placeholders;
 
-import java.util.Map;
-import java.util.UUID;
+import net.luckperms.api.cacheddata.CachedDataManager;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.query.QueryOptions;
 
 /**
- * Generic interface for a object that handles placeholder requests
+ * A standard placeholder which don't accept any arguments
  */
-public interface PlaceholderProvider {
-
-    String onPlaceholderRequest(Object player, UUID playerUuid, String placeholder);
-
-    Map<String, Placeholder> getPlaceholders();
-
+@FunctionalInterface
+interface StaticPlaceholder extends Placeholder {
+    Object handle(Object player, User user, CachedDataManager userData, QueryOptions queryOptions);
 }
