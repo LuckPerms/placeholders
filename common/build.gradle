@@ -1,5 +1,3 @@
 dependencies {
     compileOnly 'com.google.guava:guava:19.0'
 }
-
-description = 'placeholders-common'

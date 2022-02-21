@@ -8,7 +8,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
 
-    group = 'me.lucko.luckperms'
+    group = 'me.lucko.luckperms.placeholders'
     version = '5.1-SNAPSHOT'
 
     sourceCompatibility = JavaVersion.VERSION_1_8

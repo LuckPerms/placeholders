@@ -1,5 +1,5 @@
 dependencies {
-    implementation project(':placeholders-common')
+    implementation project(':common')
     compileOnly 'org.bukkit:bukkit:1.12.2-R0.1-SNAPSHOT'
     compileOnly 'be.maximvdw:MVdWPlaceholderAPI:3.0.1-SNAPSHOT', {
         exclude group: 'be.maximvdw', module: 'MVdWUpdater'
@@ -15,5 +15,5 @@ processResources {
 }
 
 shadowJar {
-    archiveFileName = "LuckPermsMVdWHook.jar"
+    archiveFileName = "LuckPerms-MVdWPlaceholderAPI-Hook.jar"
 }

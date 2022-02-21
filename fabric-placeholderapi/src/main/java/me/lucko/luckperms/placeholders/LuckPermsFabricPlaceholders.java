@@ -28,6 +28,7 @@ package me.lucko.luckperms.placeholders;
 import eu.pb4.placeholders.PlaceholderAPI;
 import eu.pb4.placeholders.PlaceholderResult;
 import eu.pb4.placeholders.TextParser;
+
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
