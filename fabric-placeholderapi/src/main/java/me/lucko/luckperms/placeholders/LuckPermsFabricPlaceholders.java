@@ -25,9 +25,9 @@
 
 package me.lucko.luckperms.placeholders;
 
-import eu.pb4.placeholders.PlaceholderAPI;
-import eu.pb4.placeholders.PlaceholderResult;
-import eu.pb4.placeholders.TextParser;
+import eu.pb4.placeholders.api.Placeholders;
+import eu.pb4.placeholders.api.PlaceholderResult;
+import eu.pb4.placeholders.api.TextParserUtils;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -62,10 +62,11 @@ public class LuckPermsFabricPlaceholders implements ModInitializer, PlaceholderP
         placeholders.forEach((s, placeholder) -> {
             // Trim the unneeded _ off the end of dynamic placeholders
             String trimmed = s.replaceAll("_$", "");
-            PlaceholderAPI.register(new Identifier("luckperms", trimmed), ctx -> {
+            Placeholders.register(new Identifier("luckperms", trimmed), (ctx, arg) -> {
 
                 if (ctx.hasPlayer()) {
-                    ServerPlayerEntity player = ctx.getPlayer();
+                    ServerPlayerEntity player = ctx.player();
+                    assert player != null;
                     User user = luckPerms.getUserManager().getUser(player.getUuid());
                     if (user == null) return PlaceholderResult.invalid("No user!");
 
@@ -75,11 +76,11 @@ public class LuckPermsFabricPlaceholders implements ModInitializer, PlaceholderP
                     Object result = null;
                     if (placeholder instanceof DynamicPlaceholder) {
                         DynamicPlaceholder dp = (DynamicPlaceholder) placeholder;
-                        if (!ctx.hasArgument() && placeholders.containsKey(trimmed)) {
+                        if (arg == null && placeholders.containsKey(trimmed)) {
                             // Didn't use optional param
                             result = ((StaticPlaceholder) placeholders.get(trimmed)).handle(player, user, data, queryOptions);
                         } else {
-                            result = dp.handle(player, user, data, queryOptions, ctx.getArgument());
+                            result = dp.handle(player, user, data, queryOptions, arg);
                         }
                     } else if (placeholder instanceof StaticPlaceholder) {
                         StaticPlaceholder sp = (StaticPlaceholder) placeholder;
@@ -90,7 +91,7 @@ public class LuckPermsFabricPlaceholders implements ModInitializer, PlaceholderP
                         result = this.formatBoolean((boolean) result);
                     }
 
-                    return result == null ? PlaceholderResult.invalid() : PlaceholderResult.value(TextParser.parse(result.toString()));
+                    return result == null ? PlaceholderResult.invalid() : PlaceholderResult.value(TextParserUtils.formatText(result.toString()));
                 } else {
                     return PlaceholderResult.invalid("No player!");
                 }
