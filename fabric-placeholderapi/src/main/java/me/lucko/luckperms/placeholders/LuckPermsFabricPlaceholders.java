@@ -25,13 +25,11 @@
 
 package me.lucko.luckperms.placeholders;
 
-import eu.pb4.placeholders.api.Placeholders;
 import eu.pb4.placeholders.api.PlaceholderResult;
+import eu.pb4.placeholders.api.Placeholders;
 import eu.pb4.placeholders.api.TextParserUtils;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.cacheddata.CachedDataManager;
@@ -46,13 +44,7 @@ public class LuckPermsFabricPlaceholders implements ModInitializer, PlaceholderP
 
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            if (!FabricLoader.getInstance().isModLoaded("luckperms")) {
-                throw new RuntimeException("LuckPerms API not provided.");
-            }
-
-            registerPlaceholders();
-        });
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> registerPlaceholders());
     }
 
     private void registerPlaceholders() {
