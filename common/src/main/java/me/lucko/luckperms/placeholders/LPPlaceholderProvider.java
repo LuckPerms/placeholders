@@ -52,6 +52,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -213,17 +214,6 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .orElse("")
         );
 
-        builder.addStatic("highest_group_weight", (player, user, userData, queryOptions) ->
-                user.getNodes(NodeType.INHERITANCE).stream()
-                        .filter(n -> queryOptions.satisfies(n.getContexts()))
-                        .map(InheritanceNode::getGroupName)
-                        .map(n -> this.luckPerms.getGroupManager().getGroup(n))
-                        .filter(Objects::nonNull)
-                        .max(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
-                        .map(Group::getWeight)
-                        .orElse(0)
-        );
-
         builder.addStatic("lowest_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getNodes(NodeType.INHERITANCE).stream()
                         .filter(n -> queryOptions.satisfies(n.getContexts()))
@@ -250,6 +240,19 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(Group::getName)
                         .map(this::convertGroupDisplayName)
                         .orElse("")
+        );
+
+        builder.addStatic("highest_group_weight", (player, user, userData, queryOptions) ->
+                user.getNodes(NodeType.INHERITANCE).stream()
+                        .filter(n -> queryOptions.satisfies(n.getContexts()))
+                        .map(InheritanceNode::getGroupName)
+                        .map(n -> this.luckPerms.getGroupManager().getGroup(n))
+                        .filter(Objects::nonNull)
+                        .map(Group::getWeight)
+                        .filter(OptionalInt::isPresent)
+                        .mapToInt(OptionalInt::getAsInt)
+                        .max()
+                        .orElse(0)
         );
 
         builder.addDynamic("current_group_on_track", (player, user, userData, queryOptions, trackName) -> {
