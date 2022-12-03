@@ -213,6 +213,17 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .orElse("")
         );
 
+        builder.addStatic("highest_group_weight", (player, user, userData, queryOptions) ->
+                user.getNodes(NodeType.INHERITANCE).stream()
+                        .filter(n -> queryOptions.satisfies(n.getContexts()))
+                        .map(InheritanceNode::getGroupName)
+                        .map(n -> this.luckPerms.getGroupManager().getGroup(n))
+                        .filter(Objects::nonNull)
+                        .max(Comparator.comparingInt(g -> g.getWeight().orElse(0)))
+                        .map(Group::getWeight)
+                        .orElse(0)
+        );
+
         builder.addStatic("lowest_group_by_weight", (player, user, userData, queryOptions) ->
                 user.getNodes(NodeType.INHERITANCE).stream()
                         .filter(n -> queryOptions.satisfies(n.getContexts()))
