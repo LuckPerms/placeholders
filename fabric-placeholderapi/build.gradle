@@ -16,7 +16,7 @@ dependencies {
 
     implementation project(':common')
     shadow project(':common')
-    modImplementation include("eu.pb4:placeholder-api:2.0.0-beta.6+1.19")
+    modImplementation include("eu.pb4:placeholder-api:2.0.0-pre.1+1.19.2")
 }
 
 processResources {
