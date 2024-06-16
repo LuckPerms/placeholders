@@ -2,6 +2,10 @@ plugins {
     id 'fabric-loom' version '0.10.+'
 }
 
+loom {
+    accessWidenerPath = new File("src/main/resources/luckperms-placeholders.accesswidener")
+}
+
 repositories {
     maven { url "https://maven.nucleoid.xyz/" }
 }

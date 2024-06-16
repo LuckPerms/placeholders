@@ -19,6 +19,7 @@
       "me.lucko.luckperms.placeholders.LuckPermsFabricPlaceholders"
     ]
   },
+  "accessWidener": "luckperms-placeholders.accesswidener",
   "depends": {
     "fabricloader": ">=0.7.4",
     "minecraft": ">=1.19.2",
