@@ -58,7 +58,7 @@ public class LuckPermsFabricPlaceholders implements ModInitializer, PlaceholderP
         placeholders.forEach((s, placeholder) -> {
             // Trim the unneeded _ off the end of dynamic placeholders
             String trimmed = s.replaceAll("_$", "");
-            Placeholders.register(new Identifier("luckperms", trimmed), (ctx, arg) -> {
+            Placeholders.register(Identifier.of("luckperms", trimmed), (ctx, arg) -> {
 
                 if (ctx.hasPlayer()) {
                     ServerPlayerEntity player = ctx.player();

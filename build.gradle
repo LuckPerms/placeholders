@@ -1,12 +1,12 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'io.github.goooler.shadow' version '8.1.7'
 }
 
 defaultTasks 'build'
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'io.github.goooler.shadow'
 
     group = 'me.lucko.luckperms.placeholders'
     version = '5.4-SNAPSHOT'
@@ -29,7 +29,7 @@ subprojects {
         archives shadowJar
     }
 
-    tasks.withType(JavaCompile) {
+    tasks.withType(JavaCompile).configureEach  {
         options.encoding = 'UTF-8'
     }
 }
