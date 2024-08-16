@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.10.+'
+    id 'fabric-loom' version '1.7-SNAPSHOT'
 }
 
 repositories {
@@ -7,16 +7,16 @@ repositories {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:1.17.1"
-    mappings "net.fabricmc:yarn:1.17.1+build.65:v2"
-    modImplementation "net.fabricmc:fabric-loader:0.12.12"
-
+    minecraft 'com.mojang:minecraft:1.21.1'
+    mappings 'net.fabricmc:yarn:1.21.1+build.3:v2'
+    modImplementation "net.fabricmc:fabric-loader:0.15.11"
     //Fabric api
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.46.1+1.17"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.102.1+1.21.1"
+    //text placeholder API
+    modImplementation include("eu.pb4:placeholder-api:2.4.0-pre.2+1.21")
 
     implementation project(':common')
     shadow project(':common')
-    modImplementation include("eu.pb4:placeholder-api:2.0.0-pre.1+1.19.2")
 }
 
 processResources {
