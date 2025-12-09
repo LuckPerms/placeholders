@@ -399,6 +399,20 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                         .map(this::formatDuration)
                         .orElse("")
         );
+
+        builder.addDynamic("group_weight", (player, user, userData, queryOptions, groupName) ->
+                user.getNodes(NodeType.INHERITANCE).stream()
+                        .filter(n -> queryOptions.satisfies(n.getContexts()))
+                        .map(InheritanceNode::getGroupName)
+                        .filter(n -> n.equalsIgnoreCase(groupName))
+                        .map(n -> this.luckPerms.getGroupManager().getGroup(n))
+                        .filter(Objects::nonNull)
+                        .map(Group::getWeight)
+                        .filter(OptionalInt::isPresent)
+                        .mapToInt(OptionalInt::getAsInt)
+                        .findFirst()
+                        .orElse(0)
+        );
     }
 
     @Override
