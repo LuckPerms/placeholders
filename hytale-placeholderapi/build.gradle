@@ -1,0 +1,13 @@
+dependencies {
+    implementation project(':common')
+    compileOnly files("../libs/HytaleServer.jar")
+    compileOnly files("../libs/hytalepapi.jar")
+
+    implementation 'com.google.guava:guava:19.0'
+}
+
+description = 'luckperms-papi-expansion-hytale'
+
+shadowJar {
+    archiveFileName = "Expansion-LuckPerms-Hytale.jar"
+}
