@@ -38,9 +38,9 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.cacheddata.CachedDataManager;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.query.QueryOptions;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 
@@ -55,47 +55,48 @@ public class LuckPermsFabricPlaceholders implements ModInitializer, PlaceholderP
         LuckPerms luckPerms = LuckPermsProvider.get();
         PlaceholderProvider provider = new LPPlaceholderProvider(this, luckPerms);
         Map<String, Placeholder> placeholders = provider.getPlaceholders();
+
         placeholders.forEach((s, placeholder) -> {
             // Trim the unneeded _ off the end of dynamic placeholders
             String trimmed = s.replaceAll("_$", "");
-            Placeholders.register(Identifier.of("luckperms", trimmed), (ctx, arg) -> {
-
-                if (ctx.hasPlayer()) {
-                    ServerPlayerEntity player = ctx.player();
-                    assert player != null;
-                    User user = luckPerms.getUserManager().getUser(player.getUuid());
-                    if (user == null) return PlaceholderResult.invalid("No user!");
-
-                    CachedDataManager data = user.getCachedData();
-                    QueryOptions queryOptions = luckPerms.getContextManager().getQueryOptions(player);
-
-                    Object result = null;
-                    if (placeholder instanceof DynamicPlaceholder) {
-                        DynamicPlaceholder dp = (DynamicPlaceholder) placeholder;
-                        if (arg == null && placeholders.containsKey(trimmed)) {
-                            // Didn't use optional param
-                            result = ((StaticPlaceholder) placeholders.get(trimmed)).handle(player, user, data, queryOptions);
-                        } else {
-                            result = dp.handle(player, user, data, queryOptions, arg);
-                        }
-                    } else if (placeholder instanceof StaticPlaceholder) {
-                        StaticPlaceholder sp = (StaticPlaceholder) placeholder;
-                        result = sp.handle(player, user, data, queryOptions);
-                    }
-
-                    if (result instanceof Boolean) {
-                        result = this.formatBoolean((boolean) result);
-                    }
-
-                    return result == null ? PlaceholderResult.invalid() : PlaceholderResult.value(parseText(result.toString()));
-                } else {
+            Placeholders.register(Identifier.fromNamespaceAndPath("luckperms", trimmed), (ctx, arg) -> {
+                if (!ctx.hasPlayer()) {
                     return PlaceholderResult.invalid("No player!");
                 }
+
+                ServerPlayer player = ctx.player();
+                User user = luckPerms.getUserManager().getUser(player.getUUID());
+                if (user == null) {
+                    return PlaceholderResult.invalid("No user!");
+                }
+
+                CachedDataManager data = user.getCachedData();
+                QueryOptions queryOptions = luckPerms.getContextManager().getQueryOptions(player);
+
+                Object result = null;
+                if (placeholder instanceof DynamicPlaceholder) {
+                    DynamicPlaceholder dp = (DynamicPlaceholder) placeholder;
+                    if (arg == null && placeholders.containsKey(trimmed)) {
+                        // Didn't use optional param
+                        result = ((StaticPlaceholder) placeholders.get(trimmed)).handle(player, user, data, queryOptions);
+                    } else {
+                        result = dp.handle(player, user, data, queryOptions, arg);
+                    }
+                } else if (placeholder instanceof StaticPlaceholder) {
+                    StaticPlaceholder sp = (StaticPlaceholder) placeholder;
+                    result = sp.handle(player, user, data, queryOptions);
+                }
+
+                if (result instanceof Boolean) {
+                    result = this.formatBoolean((boolean) result);
+                }
+
+                return result == null ? PlaceholderResult.invalid() : PlaceholderResult.value(parseText(result.toString()));
             });
         });
     }
 
-    private Text parseText(String input) {
+    private Component parseText(String input) {
         return TextNode.asSingle(LegacyFormattingParser.ALL.parseNodes(TextParserUtils.formatNodes(input))).toText(ParserContext.of(), true);
     }
 }

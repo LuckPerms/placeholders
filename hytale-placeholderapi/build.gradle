@@ -1,0 +1,18 @@
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
+repositories {
+    maven { url 'https://maven.hytale.com/release/' }
+    maven { url "https://repo.helpch.at/releases" }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly 'com.hypixel.hytale:Server:2026.01.24-6e2d4fc36'
+    compileOnly "at.helpch:placeholderapi-hytale:1.0.1"
+}
+
+shadowJar {
+    archiveFileName = "Expansion-LuckPerms-Hytale.jar"
+}

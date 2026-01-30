@@ -1,22 +1,48 @@
+import net.fabricmc.loom.task.RemapJarTask
+
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'fabric-loom' version '1.13-SNAPSHOT'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
 }
 
 repositories {
-    maven { url "https://maven.nucleoid.xyz/" }
+    maven {
+        url 'https://maven.nucleoid.xyz/'
+        content {
+            includeGroup('eu.pb4')
+        }
+    }
+}
+
+configurations {
+    shade
+    implementation.extendsFrom shade
 }
 
 dependencies {
-    minecraft 'com.mojang:minecraft:1.21.1'
-    mappings 'net.fabricmc:yarn:1.21.1+build.3:v2'
-    modImplementation "net.fabricmc:fabric-loader:0.15.11"
-    //Fabric api
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.102.1+1.21.1"
-    //text placeholder API
-    modImplementation include("eu.pb4:placeholder-api:2.4.0-pre.2+1.21")
+    // https://modmuss50.me/fabric.html
+    minecraft 'com.mojang:minecraft:1.21.11'
+    mappings loom.officialMojangMappings()
+    modImplementation 'net.fabricmc:fabric-loader:0.18.2'
 
-    implementation project(':common')
-    shadow project(':common')
+    Set<String> apiModules = [
+            "fabric-api-base",
+            "fabric-lifecycle-events-v1"
+    ]
+
+    // Add each module as a dependency
+    apiModules.forEach {
+        modImplementation(fabricApi.module(it, '0.139.4+1.21.11'))
+    }
+
+    include(modImplementation('me.lucko:fabric-permissions-api:0.6.1'))
+
+    modImplementation('eu.pb4:placeholder-api:2.8.1+1.21.10')
+
+    shade project(':common')
 }
 
 processResources {
@@ -29,12 +55,14 @@ processResources {
 }
 
 shadowJar {
-    //archiveFileName = "LuckPermsFabricPlaceholder.jar"
-    configurations = [project.configurations.shadow]
+    configurations = [project.configurations.shade]
 }
 
-remapJar {
-    dependsOn shadowJar
-    input.set shadowJar.archiveFile.get()
-    archiveFileName = "LuckPerms-Fabric-PlaceholderAPI-Hook.jar"
+task remappedShadowJar(type: RemapJarTask) {
+    dependsOn tasks.shadowJar
+    input = tasks.shadowJar.archiveFile
+    addNestedDependencies = true
+    archiveFileName = "LuckPerms-Fabric-Placeholders.jar"
 }
+
+tasks.assemble.dependsOn tasks.remappedShadowJar

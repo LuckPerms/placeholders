@@ -4,7 +4,9 @@ dependencies {
     compileOnly 'me.clip:placeholderapi:2.8.2'
 }
 
-description = 'luckperms-papi-expansion'
+repositories {
+    maven { url('https://hub.spigotmc.org/nexus/content/repositories/snapshots/') }
+}
 
 shadowJar {
     archiveFileName = "Expansion-LuckPerms.jar"

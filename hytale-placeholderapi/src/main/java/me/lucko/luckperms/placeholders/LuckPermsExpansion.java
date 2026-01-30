@@ -25,18 +25,20 @@
 
 package me.lucko.luckperms.placeholders;
 
-import me.clip.placeholderapi.PlaceholderAPIPlugin;
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import com.hypixel.hytale.common.plugin.PluginIdentifier;
+import com.hypixel.hytale.server.core.HytaleServer;
+import at.helpch.placeholderapi.PlaceholderAPIPlugin;
+import at.helpch.placeholderapi.expansion.PlaceholderExpansion;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
 import net.luckperms.api.LuckPerms;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import net.luckperms.api.LuckPermsProvider;
 
 /**
  * PlaceholderAPI Expansion for LuckPerms, implemented using the LuckPerms API.
  */
 public class LuckPermsExpansion extends PlaceholderExpansion implements PlaceholderPlatform {
     private static final String IDENTIFIER = "luckperms";
-    private static final String PLUGIN_NAME = "LuckPerms";
+    private static final String PLUGIN_NAME = "LuckPerms:LuckPerms";
     private static final String AUTHOR = "Luck";
     private static final String VERSION = "5.4-R2";
 
@@ -44,7 +46,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion implements Placehol
 
     @Override
     public boolean canRegister() {
-        return Bukkit.getServicesManager().isProvidedFor(LuckPerms.class);
+        return HytaleServer.get().getPluginManager().getPlugin(PluginIdentifier.fromString(PLUGIN_NAME)) != null;
     }
 
     @Override
@@ -53,23 +55,25 @@ public class LuckPermsExpansion extends PlaceholderExpansion implements Placehol
             return false;
         }
 
-        LuckPerms luckPerms = Bukkit.getServicesManager().getRegistration(LuckPerms.class).getProvider();
+//        LuckPerms luckPerms = Bukkit.getServicesManager().getRegistration(LuckPerms.class).getProvider();
+        final LuckPerms luckPerms = LuckPermsProvider.get();
+
         this.provider = new LPPlaceholderProvider(this, luckPerms);
         return super.register();
     }
 
     @Override
-    public String onPlaceholderRequest(Player player, String identifier) {
+    public String onPlaceholderRequest(PlayerRef player, String identifier) {
         if (player == null || this.provider == null) {
             return "";
         }
 
-        return this.provider.onPlaceholderRequest(player, player.getUniqueId(), identifier);
+        return this.provider.onPlaceholderRequest(player, player.getUuid(), identifier);
     }
 
     @Override
     public String formatBoolean(boolean b) {
-        return b ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
+        return b ? PlaceholderAPIPlugin.instance().configManager().config().booleanValue().trueValue() : PlaceholderAPIPlugin.instance().configManager().config().booleanValue().falseValue();
     }
 
     @Override
