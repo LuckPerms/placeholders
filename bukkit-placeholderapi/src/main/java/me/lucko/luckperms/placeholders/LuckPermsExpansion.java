@@ -38,7 +38,7 @@ public class LuckPermsExpansion extends PlaceholderExpansion implements Placehol
     private static final String IDENTIFIER = "luckperms";
     private static final String PLUGIN_NAME = "LuckPerms";
     private static final String AUTHOR = "Luck";
-    private static final String VERSION = "5.4-R2";
+    private static final String VERSION = "5.5-R1";
 
     private LPPlaceholderProvider provider;
 
