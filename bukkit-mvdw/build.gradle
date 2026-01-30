@@ -6,7 +6,9 @@ dependencies {
     }
 }
 
-description = 'luckperms-mvdw-hook'
+repositories {
+    maven { url('https://hub.spigotmc.org/nexus/content/repositories/snapshots/') }
+}
 
 processResources {
     filesMatching('plugin.yml') {

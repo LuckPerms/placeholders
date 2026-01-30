@@ -4,10 +4,7 @@
   "version": "${version}",
   "name": "LuckPerms Placeholders",
   "description": "Provides placeholders for LuckPerms",
-  "authors": [
-    "Luck",
-    "Potatoboy9999"
-  ],
+  "authors": ["Luck"],
   "contact": {
     "website": "https://luckperms.net/",
     "repo": "https://github.com/LuckPerms/placeholders"

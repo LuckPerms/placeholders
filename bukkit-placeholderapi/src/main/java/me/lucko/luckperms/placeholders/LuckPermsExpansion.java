@@ -27,7 +27,6 @@ package me.lucko.luckperms.placeholders;
 
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.clip.placeholderapi.util.TimeUtil;
 import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

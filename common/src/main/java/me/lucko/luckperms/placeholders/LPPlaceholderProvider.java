@@ -25,12 +25,6 @@
 
 package me.lucko.luckperms.placeholders;
 
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.cacheddata.CachedDataManager;
 import net.luckperms.api.metastacking.DuplicateRemovalFunction;
@@ -45,6 +39,9 @@ import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.track.Track;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -88,13 +85,13 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
     }
 
     private void setup(PlaceholderBuilder builder) {
-        builder.addStatic("prefix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getPrefix()));
+        builder.addStatic("prefix", (player, user, userData, queryOptions) -> Objects.toString(userData.getMetaData(queryOptions).getPrefix(), ""));
 
-        builder.addStatic("suffix", (player, user, userData, queryOptions) -> Strings.nullToEmpty(userData.getMetaData(queryOptions).getSuffix()));
+        builder.addStatic("suffix", (player, user, userData, queryOptions) -> Objects.toString(userData.getMetaData(queryOptions).getSuffix(), ""));
 
         // meta_all needs to go before meta because they both share the same prefix
         builder.addDynamic("meta_all", (player, user, userData, queryOptions, node) -> {
-            List<String> values = userData.getMetaData(queryOptions).getMeta().getOrDefault(node, ImmutableList.of());
+            List<String> values = userData.getMetaData(queryOptions).getMeta().getOrDefault(node, List.of());
             return values.isEmpty() ? "" : String.join(", ", values);
         });
 
@@ -109,13 +106,13 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                 return "ERROR: Invalid element!";
             }
 
-            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
+            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(List.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
             QueryOptions newOptions = queryOptions.toBuilder()
                     .option(MetaStackDefinition.PREFIX_STACK_KEY, stackDefinition)
                     .option(MetaStackDefinition.SUFFIX_STACK_KEY, stackDefinition)
                     .build();
 
-            return Strings.nullToEmpty(userData.getMetaData(newOptions).getPrefix());
+            return Objects.toString(userData.getMetaData(newOptions).getPrefix(), "");
         });
 
         builder.addDynamic("suffix_element", (player, user, userData, queryOptions, element) -> {
@@ -124,13 +121,13 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                 return "ERROR: Invalid element!";
             }
 
-            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(ImmutableList.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
+            MetaStackDefinition stackDefinition = this.luckPerms.getMetaStackFactory().createDefinition(List.of(stackElement), DuplicateRemovalFunction.RETAIN_ALL, "", "", "");
             QueryOptions newOptions = queryOptions.toBuilder()
                     .option(MetaStackDefinition.PREFIX_STACK_KEY, stackDefinition)
                     .option(MetaStackDefinition.SUFFIX_STACK_KEY, stackDefinition)
                     .build();
 
-            return Strings.nullToEmpty(userData.getMetaData(newOptions).getSuffix());
+            return Objects.toString(userData.getMetaData(newOptions).getSuffix(), "");
         });
 
         builder.addStatic("context", (player, user, userData, queryOptions) ->
@@ -292,7 +289,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                 return "";
             }
 
-            return Strings.nullToEmpty(convertGroupDisplayName(track.getNext(groups.get(0))));
+            return Objects.toString(convertGroupDisplayName(track.getNext(groups.get(0))), "");
         });
 
         builder.addDynamic("previous_group_on_track", (player, user, userData, queryOptions, trackName) -> {
@@ -312,11 +309,11 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                 return "";
             }
 
-            return Strings.nullToEmpty(convertGroupDisplayName(track.getPrevious(groups.get(0))));
+            return Objects.toString(convertGroupDisplayName(track.getPrevious(groups.get(0))), "");
         });
 
         builder.addDynamic("first_group_on_tracks", (player, user, userData, queryOptions, argument) -> {
-            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
+            List<String> tracks = Arrays.stream(argument.split(",")).map(String::trim).collect(Collectors.toList());
             Set<String> groups = user.getInheritedGroups(queryOptions).stream().map(Group::getName).collect(Collectors.toSet());
 
             return tracks.stream()
@@ -332,14 +329,18 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
         });
 
         builder.addDynamic("last_group_on_tracks", (player, user, userData, queryOptions, argument) -> {
-            List<String> tracks = Splitter.on(',').trimResults().splitToList(argument);
+            List<String> tracks = Arrays.stream(argument.split(",")).map(String::trim).collect(Collectors.toList());
             Set<String> groups = user.getInheritedGroups(queryOptions).stream().map(Group::getName).collect(Collectors.toSet());
 
             return tracks.stream()
                     .map(n -> this.luckPerms.getTrackManager().getTrack(n))
                     .filter(Objects::nonNull)
                     .map(Track::getGroups)
-                    .map(Lists::reverse)
+                    .map(list -> {
+                        List<String> copy = new ArrayList<>(list);
+                        Collections.reverse(copy);
+                        return copy;
+                    })
                     .map(trackGroups -> trackGroups.stream().filter(groups::contains).findFirst())
                     .filter(Optional::isPresent)
                     .map(Optional::get)
@@ -511,7 +512,7 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
         }
         
         public Map<String, Placeholder> build() {
-            return ImmutableMap.copyOf(this.placeholders);
+            return Map.copyOf(this.placeholders);
         }
     }
 }
