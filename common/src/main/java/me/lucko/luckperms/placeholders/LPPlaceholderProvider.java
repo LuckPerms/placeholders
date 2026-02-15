@@ -349,6 +349,36 @@ public class LPPlaceholderProvider implements PlaceholderProvider {
                     .orElse("");
         });
 
+        builder.addDynamic("current_group_position_on_track", (player, user, userData, queryOptions, trackName) -> {
+            Track track = this.luckPerms.getTrackManager().getTrack(trackName);
+            if (track == null || track.getGroups().size() <= 1) {
+                return 0;
+            }
+
+            List<Group> groups = user.getNodes(NodeType.INHERITANCE).stream()
+                    .filter(n -> track.containsGroup(n.getGroupName()))
+                    .filter(n -> queryOptions.satisfies(n.getContexts()))
+                    .distinct()
+                    .map(n -> this.luckPerms.getGroupManager().getGroup(n.getGroupName()))
+                    .collect(Collectors.toList());
+
+            if (groups.size() != 1) {
+                return 0;
+            }
+
+            return track.getGroups().indexOf(groups.get(0).getFriendlyName()) + 1;
+        });
+
+
+        builder.addDynamic("number_groups_on_track", (player, user, userData, queryOptions, trackName) -> {
+            Track track = this.luckPerms.getTrackManager().getTrack(trackName);
+            if (track == null || track.getGroups().size() <= 1) {
+                return "0";
+            }
+
+            return track.getGroups().size();
+        });
+
         builder.addDynamic("expiry_time", (player, user, userData, queryOptions, node) ->
                 user.getNodes().stream()
                         .filter(Node::hasExpiry)
